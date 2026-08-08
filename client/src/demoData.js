@@ -1,0 +1,535 @@
+export const INITIAL_DEMO_POSTS = [
+  {
+    "id": "seed001",
+    "type": "lost",
+    "title": "Black Leather Wallet with Student ID",
+    "description": "Lost a black tri-fold leather wallet containing my university student ID (Alex Rivers), transit pass, debit card, and some cash. Lost somewhere between the Main Library 3rd floor study area and the Student Union cafeteria.",
+    "category": "Wallet / ID",
+    "location": "Main Library, 3rd Floor Study Area",
+    "dateLost": "2026-07-28",
+    "contactName": "Alex Rivers",
+    "contactMethod": "alex.rivers@university.edu | (555) 234-5678",
+    "image": "https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&w=600&q=80",
+    "status": "open",
+    "likes": 14,
+    "likedBy": [],
+    "comments": [
+      {
+        "id": "c001a",
+        "text": "I saw someone hand in a black wallet to the library front desk around 4 PM! Definitely worth checking with them.",
+        "authorName": "Jamie K.",
+        "authorInitials": "JK",
+        "createdAt": "2026-07-28T16:15:00.000Z"
+      },
+      {
+        "id": "c001b",
+        "text": "Hope you find it Alex! Losing student ID right before finals week is stressful.",
+        "authorName": "Priya S.",
+        "authorInitials": "PS",
+        "createdAt": "2026-07-28T18:30:00.000Z"
+      }
+    ],
+    "createdAt": "2026-07-28T14:30:00.000Z"
+  },
+  {
+    "id": "seed002",
+    "type": "found",
+    "title": "Found: Navy Blue Sony Wireless Headphones",
+    "description": "Found a pair of navy blue noise-canceling headphones inside a hard protective case on a booth table near the south entrance of the student cafeteria. Currently handed over to the Campus Security Office.",
+    "category": "Electronics",
+    "location": "Student Cafeteria, South Entrance",
+    "dateLost": "2026-07-29",
+    "contactName": "Campus Security Office",
+    "contactMethod": "security@university.edu | Ext. 4400",
+    "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
+    "status": "open",
+    "likes": 21,
+    "likedBy": [],
+    "comments": [
+      {
+        "id": "c002a",
+        "text": "Those might be mine! I was studying at that exact booth Tuesday afternoon. Heading to security right now to claim!",
+        "authorName": "Ravi M.",
+        "authorInitials": "RM",
+        "createdAt": "2026-07-29T12:00:00.000Z"
+      },
+      {
+        "id": "c002b",
+        "text": "Thanks for handing them in instead of leaving them there!",
+        "authorName": "Elena V.",
+        "authorInitials": "EV",
+        "createdAt": "2026-07-29T13:45:00.000Z"
+      }
+    ],
+    "createdAt": "2026-07-29T09:15:00.000Z"
+  },
+  {
+    "id": "seed003",
+    "type": "lost",
+    "title": "Algorithm Design Textbook (CLRS 4th Ed)",
+    "description": "Left my heavy hardcover 'Introduction to Algorithms' (CLRS 4th Edition) in CS Building Room 201 after the 2 PM Data Structures lecture. The book has colorful sticky tabs along the edges and my name written on the inside cover.",
+    "category": "Books",
+    "location": "CS Building, Room 201",
+    "dateLost": "2026-07-27",
+    "contactName": "Jordan Chen",
+    "contactMethod": "jordan.chen@university.edu",
+    "image": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80",
+    "status": "open",
+    "likes": 9,
+    "likedBy": [],
+    "comments": [
+      {
+        "id": "c003a",
+        "text": "I saw a thick textbook on the window sill in CS 201 this morning during morning lab. Check with the CS dept office.",
+        "authorName": "Dana L.",
+        "authorInitials": "DL",
+        "createdAt": "2026-07-28T08:00:00.000Z"
+      }
+    ],
+    "createdAt": "2026-07-27T18:45:00.000Z"
+  },
+  {
+    "id": "seed004",
+    "type": "found",
+    "title": "Found: Stainless Steel Hydroflask (Olive Green)",
+    "description": "Olive green stainless steel water bottle found near the East Campus athletic track. It has a slight dent on the bottom rim and a mountain sticker on the front. Left at the Recreation Center front desk.",
+    "category": "Other",
+    "location": "East Athletics Field / Running Track",
+    "dateLost": "2026-07-30",
+    "contactName": "Gym Front Desk",
+    "contactMethod": "rec-center@university.edu",
+    "image": "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=600&q=80",
+    "status": "open",
+    "likes": 6,
+    "likedBy": [],
+    "comments": [
+      {
+        "id": "c004a",
+        "text": "That's my workout bottle! Left it during track practice. Will pick it up tonight, thank you!",
+        "authorName": "Marcus V.",
+        "authorInitials": "MV",
+        "createdAt": "2026-07-30T17:10:00.000Z"
+      }
+    ],
+    "createdAt": "2026-07-30T16:20:00.000Z"
+  },
+  {
+    "id": "seed005",
+    "type": "lost",
+    "title": "MacBook Pro 14\" (Space Grey) in Leather Sleeve",
+    "description": "Urgent: Space Grey MacBook Pro 14-inch left in Engineering Building Lab E-204 on the back bench. It is enclosed in a dark brown leather sleeve and has a GitHub sticker on the corner. Crucial lab work is saved on it.",
+    "category": "Electronics",
+    "location": "Engineering Building, Lab E-204",
+    "dateLost": "2026-07-31",
+    "contactName": "Marcus Aurelius",
+    "contactMethod": "marcus.a@university.edu | (555) 890-1234",
+    "image": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80",
+    "status": "open",
+    "likes": 35,
+    "likedBy": [],
+    "comments": [
+      {
+        "id": "c005a",
+        "text": "The lab was locked at 8 PM by facility staff. Building manager has the lost items locker keys — call ext. 3100!",
+        "authorName": "Prof. Lin",
+        "authorInitials": "PL",
+        "createdAt": "2026-08-01T07:30:00.000Z"
+      },
+      {
+        "id": "c005b",
+        "text": "Boosted! Hope you get it back safe Marcus 🙏",
+        "authorName": "Nina W.",
+        "authorInitials": "NW",
+        "createdAt": "2026-08-01T09:00:00.000Z"
+      },
+      {
+        "id": "c005c",
+        "text": "Checked with lab supervisor, it's locked in the department safe right now. You can pick it up tomorrow 8 AM!",
+        "authorName": "Helpful Anon",
+        "authorInitials": "HA",
+        "createdAt": "2026-08-01T09:45:00.000Z"
+      }
+    ],
+    "createdAt": "2026-08-01T00:30:00.000Z"
+  },
+  {
+    "id": "seed006",
+    "type": "found",
+    "title": "Found: Car Keys with Red Lanyard (Honda)",
+    "description": "Found a Honda car key with 2 house keys attached to a red woven lanyard outside the Arts Building main entrance staircase. Turned in to the Arts Building reception desk.",
+    "category": "Keys",
+    "location": "Arts Building, Main Entrance Stairs",
+    "dateLost": "2026-07-31",
+    "contactName": "Arts Dept Reception",
+    "contactMethod": "arts-reception@university.edu",
+    "image": "https://images.unsplash.com/photo-1582139329536-e7284fece509?auto=format&fit=crop&w=600&q=80",
+    "status": "resolved",
+    "likes": 18,
+    "likedBy": [],
+    "comments": [
+      {
+        "id": "c006a",
+        "text": "OMG those were mine! Picked them up from reception just now. Thanks a million!",
+        "authorName": "Bao Nguyen",
+        "authorInitials": "BN",
+        "createdAt": "2026-07-31T17:20:00.000Z"
+      }
+    ],
+    "createdAt": "2026-07-31T16:00:00.000Z"
+  },
+  {
+    "id": "seed007",
+    "type": "lost",
+    "title": "Blue North Face Backpack with Class Notes",
+    "description": "Lost a navy blue North Face Borealis backpack containing notebooks, USB drive, pencil pouch, and a Dell XPS laptop. Left on a chair in the Student Union lounge area near the coffee shop.",
+    "category": "Backpack / Bag",
+    "location": "Student Union Lounge, 2nd Floor",
+    "dateLost": "2026-08-01",
+    "contactName": "Omar Farooq",
+    "contactMethod": "omar.f@university.edu | (555) 777-9911",
+    "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80",
+    "status": "open",
+    "likes": 28,
+    "likedBy": [],
+    "comments": [
+      {
+        "id": "c007a",
+        "text": "Saw a blue backpack near the lounge couches around 5 PM! Union staff moved it to the Information Desk for safety.",
+        "authorName": "Zara P.",
+        "authorInitials": "ZP",
+        "createdAt": "2026-08-01T18:30:00.000Z"
+      },
+      {
+        "id": "c007b",
+        "text": "Awesome news! Go check the Info desk Omar!",
+        "authorName": "Chris D.",
+        "authorInitials": "CD",
+        "createdAt": "2026-08-01T19:00:00.000Z"
+      }
+    ],
+    "createdAt": "2026-08-01T17:00:00.000Z"
+  },
+  {
+    "id": "seed008",
+    "type": "found",
+    "title": "Found: Apple Watch Series 8 (Black Sport Band)",
+    "description": "Found an Apple Watch Series 8 with a black silicone sport band resting on a bench near the Science Quad fountain. Screen is locked. Turned in to the Student Services Center.",
+    "category": "Electronics",
+    "location": "Science Quad Fountain Benches",
+    "dateLost": "2026-08-01",
+    "contactName": "Student Services Desk",
+    "contactMethod": "studentservices@university.edu",
+    "image": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80",
+    "status": "open",
+    "likes": 16,
+    "likedBy": [],
+    "comments": [
+      {
+        "id": "c008a",
+        "text": "My friend Luke lost his Apple Watch while studying by the fountain today! Sending him this link.",
+        "authorName": "Sophie R.",
+        "authorInitials": "SR",
+        "createdAt": "2026-08-01T14:30:00.000Z"
+      }
+    ],
+    "createdAt": "2026-08-01T13:00:00.000Z"
+  },
+  {
+    "id": "seed009",
+    "type": "lost",
+    "title": "Designer Prescription Glasses in Green Case",
+    "description": "Lost dark tortoise-shell prescription glasses inside a hard green leather case. Lost somewhere in Lecture Hall B or the walkway leading to the Science Library.",
+    "category": "Other",
+    "location": "Lecture Hall B / Science Library Walkway",
+    "dateLost": "2026-07-30",
+    "contactName": "Felix Wright",
+    "contactMethod": "felix.w@university.edu",
+    "image": "https://images.unsplash.com/photo-1591076482161-42ce6da69f67?auto=format&fit=crop&w=600&q=80",
+    "status": "open",
+    "likes": 11,
+    "likedBy": [],
+    "comments": [
+      {
+        "id": "c009a",
+        "text": "Someone left a green glasses case on the podium in Lecture Hall B after 10 AM physics lecture!",
+        "authorName": "Sara K.",
+        "authorInitials": "SK",
+        "createdAt": "2026-07-31T09:15:00.000Z"
+      }
+    ],
+    "createdAt": "2026-07-30T17:30:00.000Z"
+  },
+  {
+    "id": "seed010",
+    "type": "found",
+    "title": "Found: AirPods Pro (2nd Gen) in Charging Case",
+    "description": "Found AirPods Pro in white MagSafe case on the floor of Campus Cafe near the window seats. Left with the head barista at the coffee bar.",
+    "category": "Electronics",
+    "location": "Campus Cafe, Window Seating",
+    "dateLost": "2026-07-31",
+    "contactName": "Campus Cafe Staff",
+    "contactMethod": "cafe@university.edu",
+    "image": "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?auto=format&fit=crop&w=600&q=80",
+    "status": "open",
+    "likes": 22,
+    "likedBy": [],
+    "comments": [
+      {
+        "id": "c010a",
+        "text": "Mine! I was sitting at the window table having espresso around 3 PM! Thank you cafe team!",
+        "authorName": "Mei Lin",
+        "authorInitials": "ML",
+        "createdAt": "2026-07-31T22:00:00.000Z"
+      }
+    ],
+    "createdAt": "2026-07-31T21:00:00.000Z"
+  },
+  {
+    "id": "seed011",
+    "type": "lost",
+    "title": "TI-84 Plus CE Graphing Calculator",
+    "description": "Black TI-84 Plus CE calculator lost right before calculus midterm. Has a yellow label on the back with name 'Nadia S.'. Lost in Math Building 1st floor hallway.",
+    "category": "Electronics",
+    "location": "Math Building, 1st Floor",
+    "dateLost": "2026-08-01",
+    "contactName": "Nadia Shah",
+    "contactMethod": "nadia.s@university.edu",
+    "image": "https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?auto=format&fit=crop&w=600&q=80",
+    "status": "open",
+    "likes": 25,
+    "likedBy": [],
+    "comments": [
+      {
+        "id": "c011a",
+        "text": "I have a spare TI-84 calculator you can borrow for the midterm if needed! DM me!",
+        "authorName": "Prof. Ahmed",
+        "authorInitials": "PA",
+        "createdAt": "2026-08-01T20:15:00.000Z"
+      },
+      {
+        "id": "c011b",
+        "text": "Check Math Department main office shelf in room 102!",
+        "authorName": "Kenji R.",
+        "authorInitials": "KR",
+        "createdAt": "2026-08-01T20:30:00.000Z"
+      }
+    ],
+    "createdAt": "2026-08-01T19:30:00.000Z"
+  },
+  {
+    "id": "seed012",
+    "type": "found",
+    "title": "Found: Windproof Compact Black Umbrella",
+    "description": "Automatic black umbrella with a wooden handle left at Bus Stop C near the Medical Center complex. Brought to Medical Center Security Post.",
+    "category": "Other",
+    "location": "Campus Bus Stop C (Medical Center)",
+    "dateLost": "2026-08-01",
+    "contactName": "Medical Security Post",
+    "contactMethod": "med-security@university.edu",
+    "image": "https://images.unsplash.com/photo-1517479149777-5f3b6511d5ad?auto=format&fit=crop&w=600&q=80",
+    "status": "open",
+    "likes": 5,
+    "likedBy": [],
+    "comments": [
+      {
+        "id": "c012a",
+        "text": "That's my umbrella! Left it when boarding the 5:15 express bus. Will pick it up tomorrow morning.",
+        "authorName": "Olivia P.",
+        "authorInitials": "OP",
+        "createdAt": "2026-08-01T17:30:00.000Z"
+      }
+    ],
+    "createdAt": "2026-08-01T16:00:00.000Z"
+  },
+  {
+    "id": "seed013",
+    "type": "lost",
+    "title": "Organic Chemistry Spiral Notebook (Orange Cover)",
+    "description": "Thick orange spiral notebook containing detailed lecture notes, reaction mechanisms, and lab diagrams for CHEM 301. Lost in Chemistry Lab 3B or adjacent study pods.",
+    "category": "Books",
+    "location": "Chemistry Building, Lab 3B",
+    "dateLost": "2026-07-29",
+    "contactName": "Isabelle Cruz",
+    "contactMethod": "isabelle.c@university.edu",
+    "image": "https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=600&q=80",
+    "status": "open",
+    "likes": 17,
+    "likedBy": [],
+    "comments": [
+      {
+        "id": "c013a",
+        "text": "Check Study Pod #4 in Chemistry library, someone left an orange notebook on the desk yesterday.",
+        "authorName": "Ryan G.",
+        "authorInitials": "RG",
+        "createdAt": "2026-07-30T11:00:00.000Z"
+      }
+    ],
+    "createdAt": "2026-07-29T20:00:00.000Z"
+  },
+  {
+    "id": "seed014",
+    "type": "found",
+    "title": "Found: Varsity Zip-Up Hoodie (Navy Blue, Size M)",
+    "description": "Navy blue campus varsity hoodie size M found in the West Gym men's locker room. Turned in to the athletic equipment desk.",
+    "category": "Clothing",
+    "location": "West Gym, Locker Room",
+    "dateLost": "2026-07-29",
+    "contactName": "Athletics Dept Desk",
+    "contactMethod": "athletics@university.edu",
+    "image": "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=600&q=80",
+    "status": "open",
+    "likes": 7,
+    "likedBy": [],
+    "comments": [],
+    "createdAt": "2026-07-29T11:00:00.000Z"
+  },
+  {
+    "id": "seed015",
+    "type": "lost",
+    "title": "Red 64GB USB Flash Drive with Cap",
+    "description": "Urgent: Red SanDisk 64GB flash drive containing master's thesis draft and dataset files. Lost in Postgraduate Research Lab on 4th floor.",
+    "category": "Electronics",
+    "location": "Postgrad Research Center, Floor 4",
+    "dateLost": "2026-07-30",
+    "contactName": "Yusuf Al-Mansoor",
+    "contactMethod": "yusuf.a@university.edu",
+    "image": "https://images.unsplash.com/photo-1623949303757-0f0d6d539655?auto=format&fit=crop&w=600&q=80",
+    "status": "open",
+    "likes": 42,
+    "likedBy": [],
+    "comments": [
+      {
+        "id": "c015a",
+        "text": "Everyone please double check your workspaces for Yusuf's flash drive! Crucial research!",
+        "authorName": "Dr. Reeves",
+        "authorInitials": "DR",
+        "createdAt": "2026-07-31T08:00:00.000Z"
+      },
+      {
+        "id": "c015b",
+        "text": "Found a red flash drive on the computer terminal #8 keyboard tray! Brought to lab desk manager.",
+        "authorName": "Lukas B.",
+        "authorInitials": "LB",
+        "createdAt": "2026-07-31T10:15:00.000Z"
+      }
+    ],
+    "createdAt": "2026-07-30T22:00:00.000Z"
+  },
+  {
+    "id": "seed016",
+    "type": "found",
+    "title": "Found: Men's Chronograph Silver Watch",
+    "description": "Silver analog wrist watch found on the bleachers after the inter-college soccer match. Left with the stadium supervisor at Gate 2.",
+    "category": "Other",
+    "location": "Main Sports Stadium Bleachers",
+    "dateLost": "2026-07-30",
+    "contactName": "Stadium Gate 2 Desk",
+    "contactMethod": "stadium@university.edu",
+    "image": "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=600&q=80",
+    "status": "resolved",
+    "likes": 12,
+    "likedBy": [],
+    "comments": [
+      {
+        "id": "c016a",
+        "text": "That matches my Casio watch! Retrieved from stadium supervisor. Thank you!",
+        "authorName": "Kwame A.",
+        "authorInitials": "KA",
+        "createdAt": "2026-07-31T07:45:00.000Z"
+      }
+    ],
+    "createdAt": "2026-07-30T20:00:00.000Z"
+  },
+  {
+    "id": "seed017",
+    "type": "lost",
+    "title": "Student Transit Card & Card Holder",
+    "description": "Black slim leather card sleeve with university student access badge and Metro pass. Dropped somewhere between Law School entrance and the campus shuttle station.",
+    "category": "Wallet / ID",
+    "location": "Law School / Shuttle Bus Station",
+    "dateLost": "2026-08-01",
+    "contactName": "Priya Nair",
+    "contactMethod": "priya.n@university.edu",
+    "image": "https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=600&q=80",
+    "status": "open",
+    "likes": 13,
+    "likedBy": [],
+    "comments": [
+      {
+        "id": "c017a",
+        "text": "Shuttle driver handed a card holder to the main transit office at 6 PM. Check with shuttle info booth!",
+        "authorName": "Will S.",
+        "authorInitials": "WS",
+        "createdAt": "2026-08-01T21:30:00.000Z"
+      }
+    ],
+    "createdAt": "2026-08-01T21:00:00.000Z"
+  },
+  {
+    "id": "seed018",
+    "type": "found",
+    "title": "Found: Wilson Tennis Racket in Red Cover",
+    "description": "Found a Wilson tennis racket inside a red padded racket bag near court #3 at the Campus Tennis Center. Left at Tennis Center Pro Shop.",
+    "category": "Other",
+    "location": "Campus Tennis Center, Court 3",
+    "dateLost": "2026-08-01",
+    "contactName": "Tennis Pro Shop",
+    "contactMethod": "tennis@university.edu",
+    "image": "https://images.unsplash.com/photo-1617083934555-563d23ec0822?auto=format&fit=crop&w=600&q=80",
+    "status": "open",
+    "likes": 8,
+    "likedBy": [],
+    "comments": [],
+    "createdAt": "2026-08-01T15:30:00.000Z"
+  },
+  {
+    "id": "seed019",
+    "type": "lost",
+    "title": "Knit Winter Beanie (Charcoal Grey)",
+    "description": "Dark charcoal ribbed beanie hat lost during late evening study session. Left in Fine Arts Quad or Library basement quiet room.",
+    "category": "Clothing",
+    "location": "Fine Arts Quad / Library Basement",
+    "dateLost": "2026-07-29",
+    "contactName": "Ethan Ross",
+    "contactMethod": "ethan.r@university.edu",
+    "image": "https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&w=600&q=80",
+    "status": "open",
+    "likes": 4,
+    "likedBy": [],
+    "comments": [
+      {
+        "id": "c019a",
+        "text": "Saw a grey beanie on the coat rack in the library basement!",
+        "authorName": "Hannah B.",
+        "authorInitials": "HB",
+        "createdAt": "2026-07-30T10:00:00.000Z"
+      }
+    ],
+    "createdAt": "2026-07-29T21:15:00.000Z"
+  },
+  {
+    "id": "seed020",
+    "type": "found",
+    "title": "Found: City Bicycle (Matte Black Single Speed)",
+    "description": "Matte black commuter bicycle found unlocked near the Humanities Building bike racks for 2 days straight. Campus Police tagged and secured it at Campus Police Station.",
+    "category": "Other",
+    "location": "Humanities Building Bike Racks",
+    "dateLost": "2026-07-31",
+    "contactName": "Campus Police Department",
+    "contactMethod": "police-dispatch@university.edu | (555) 0199",
+    "image": "https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=600&q=80",
+    "status": "open",
+    "likes": 30,
+    "likedBy": [],
+    "comments": [
+      {
+        "id": "c020a",
+        "text": "Proof of purchase / serial number required when claiming at police dispatch.",
+        "authorName": "Officer Davis",
+        "authorInitials": "OD",
+        "createdAt": "2026-07-31T18:00:00.000Z"
+      }
+    ],
+    "createdAt": "2026-07-31T17:00:00.000Z"
+  }
+];
