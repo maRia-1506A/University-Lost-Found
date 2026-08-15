@@ -59,24 +59,41 @@ export default function PostCard({ post }) {
 
       {/* ── Header ── */}
       <header className="post-card-header">
-        <Link
-          to={`/profile/${post.authorId || post.authorName}`}
-          className="author-profile-link"
-          title={`View ${authorDisplayName}'s profile`}
-        >
-          {post.authorAvatar ? (
-            <img
-              src={post.authorAvatar}
-              alt={authorDisplayName}
-              className="avatar-img clickable-avatar"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div className={`avatar avatar--${post.type} clickable-avatar`}>
-              {authorDisplayName.charAt(0).toUpperCase()}
-            </div>
-          )}
-        </Link>
+        {post.authorId ? (
+          <Link
+            to={`/profile/${post.authorId}`}
+            className="author-profile-link"
+            title={`View ${authorDisplayName}'s profile`}
+          >
+            {post.authorAvatar ? (
+              <img
+                src={post.authorAvatar}
+                alt={authorDisplayName}
+                className="avatar-img clickable-avatar"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className={`avatar avatar--${post.type} clickable-avatar`}>
+                {authorDisplayName.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </Link>
+        ) : (
+          <div className="author-profile-link">
+            {post.authorAvatar ? (
+              <img
+                src={post.authorAvatar}
+                alt={authorDisplayName}
+                className="avatar-img"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className={`avatar avatar--${post.type}`}>
+                {authorDisplayName.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
+        )}
         <div className="post-meta">
           <div className="post-meta-row">
             <span className={`type-badge type-badge--${post.type}`}>
@@ -88,12 +105,16 @@ export default function PostCard({ post }) {
           </div>
           <span className="time">
             {authorDisplayName ? (
-              <Link
-                to={`/profile/${post.authorId || post.authorName}`}
-                className="author-name-link"
-              >
-                {authorDisplayName}
-              </Link>
+              post.authorId ? (
+                <Link
+                  to={`/profile/${post.authorId}`}
+                  className="author-name-link"
+                >
+                  {authorDisplayName}
+                </Link>
+              ) : (
+                <span className="author-name-text">{authorDisplayName}</span>
+              )
             ) : null}
             {authorDisplayName ? " · " : ""}
             {timeAgo(post.createdAt)}

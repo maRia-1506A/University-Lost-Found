@@ -257,21 +257,23 @@ export default function PostDetailPage() {
           {copyMessage && <p className="copy-feedback">{copyMessage}</p>}
         </div>
 
-        {/* ── Admin actions ── */}
-        <div className="detail-actions">
-          <button
-            className={`btn ${
-              post.status === "open" ? "btn-primary" : "btn-ghost"
-            }`}
-            type="button"
-            onClick={handleResolve}
-          >
-            {post.status === "open" ? "Mark as resolved" : "Reopen post"}
-          </button>
-          <button className="btn btn-danger" type="button" onClick={handleDelete}>
-            Delete post
-          </button>
-        </div>
+        {/* ── Admin / Author actions ── */}
+        {(!post.authorId || post.authorId === user.id) && (
+          <div className="detail-actions">
+            <button
+              className={`btn ${
+                post.status === "open" ? "btn-primary" : "btn-ghost"
+              }`}
+              type="button"
+              onClick={handleResolve}
+            >
+              {post.status === "open" ? "Mark as resolved" : "Reopen post"}
+            </button>
+            <button className="btn btn-danger" type="button" onClick={handleDelete}>
+              Delete post
+            </button>
+          </div>
+        )}
 
         {/* ── Comments section ── */}
         <section className="detail-comments">
@@ -281,7 +283,7 @@ export default function PostDetailPage() {
           </h2>
           <CommentSection
             postId={post.id}
-            userId={user.userId}
+            userId={user.id}
           />
         </section>
       </article>

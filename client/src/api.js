@@ -84,7 +84,7 @@ export async function createPost(data, user = null) {
     contact_method: data.contactMethod || "",
     image: data.image || "",
     status: "open",
-    author_id: user?.id || null,
+    author_id: user?.isAuthenticated ? user.id : null,
     author_name: user?.name || data.contactName || "Anonymous",
     author_avatar: user?.avatar || "",
   };
@@ -129,6 +129,7 @@ export async function deletePost(id) {
  * Toggle a like for a post. Returns { likes: number, liked: boolean }.
  */
 export async function toggleLike(postId, userId) {
+  if (!userId) return { likes: 0, liked: false };
   const { data: existing } = await supabase
     .from("likes")
     .select("id")
@@ -205,10 +206,10 @@ export async function fetchStats() {
   handleError(error);
 
   return {
-    totalLost: data.filter((p) => p.type === "lost").length,
-    totalFound: data.filter((p) => p.type === "found").length,
-    openCases: data.filter((p) => p.status === "open").length,
-    resolvedCases: data.filter((p) => p.status === "resolved").length,
+    totalLost: (data || []).filter((p) => p.type === "lost").length,
+    totalFound: (data || []).filter((p) => p.type === "found").length,
+    openCases: (data || []).filter((p) => p.status === "open").length,
+    resolvedCases: (data || []).filter((p) => p.status === "resolved").length,
   };
 }
 
@@ -218,21 +219,21 @@ export async function fetchStats() {
  * Fetch all posts created by a specific user (by author_id or user_id).
  */
 export async function fetchUserPosts(userId) {
-  const { data, error } = await supabase
-    .from("posts_with_counts")
-    .select("*")
-    .or(`author_id.eq.${userId},contact_name.ilike.%${userId}%`)
-    .order("created_at", { ascending: false });
+  if (!userId) return [];
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+
+  let query = supabase.from("posts_with_counts").select("*");
+
+  if (isUuid) {
+    query = query.eq("author_id", userId);
+  } else {
+    query = query.or(`contact_name.ilike.%${userId}%,author_name.ilike.%${userId}%`);
+  }
+
+  const { data, error } = await query.order("created_at", { ascending: false });
 
   if (error) {
-    // Fallback search if UUID type mismatch
-    const { data: altData } = await supabase
-      .from("posts_with_counts")
-      .select("*")
-      .order("created_at", { ascending: false });
-    return (altData || [])
-      .filter((p) => p.author_id === userId)
-      .map(normalizePost);
+    return [];
   }
 
   return (data || []).map(normalizePost);
@@ -243,15 +244,14 @@ export async function fetchUserPosts(userId) {
  * Enriches with post title and post ID.
  */
 export async function fetchUserComments(userId) {
+  if (!userId) return [];
   const { data: comments, error } = await supabase
     .from("comments")
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
-  handleError(error);
-
-  if (!comments || comments.length === 0) return [];
+  if (error || !comments || comments.length === 0) return [];
 
   // Fetch target post titles
   const postIds = [...new Set(comments.map((c) => c.post_id))];
@@ -272,14 +272,13 @@ export async function fetchUserComments(userId) {
  * Fetch all posts that a specific user has liked.
  */
 export async function fetchUserLikedPosts(userId) {
+  if (!userId) return [];
   const { data: likes, error } = await supabase
     .from("likes")
     .select("post_id")
     .eq("user_id", userId);
 
-  handleError(error);
-
-  if (!likes || likes.length === 0) return [];
+  if (error || !likes || likes.length === 0) return [];
 
   const postIds = likes.map((l) => l.post_id);
   const { data: posts, error: postsErr } = await supabase
@@ -288,7 +287,7 @@ export async function fetchUserLikedPosts(userId) {
     .in("id", postIds)
     .order("created_at", { ascending: false });
 
-  handleError(postsErr);
+  if (postsErr) return [];
   return (posts || []).map(normalizePost);
 }
 
