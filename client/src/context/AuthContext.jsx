@@ -24,13 +24,6 @@ export function AuthProvider({ children }) {
           if (window.location.hash && window.location.hash.includes("access_token")) {
             window.history.replaceState(null, "", window.location.pathname);
           }
-          if (window.location.pathname !== "/") {
-            window.location.href = window.location.origin + "/";
-          }
-        } else if (event === "SIGNED_OUT") {
-          if (window.location.pathname !== "/") {
-            window.location.href = window.location.origin + "/";
-          }
         }
       }
     );
