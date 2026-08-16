@@ -2,16 +2,18 @@ import React, { useCallback, useEffect, useState } from "react";
 import FilterBar from "../components/FilterBar.jsx";
 import PostCard from "../components/PostCard.jsx";
 import PostForm from "../components/PostForm.jsx";
+import AuthModal from "../components/AuthModal.jsx";
 import { fetchPosts, createPost, fetchStats } from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Feed({ composerSignal = 0 }) {
-  const { user } = useAuth();
+  const { user, signInWithGoogle } = useAuth();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filters, setFilters] = useState({ type: "all", category: "", q: "" });
   const [showForm, setShowForm] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const [stats, setStats] = useState({
@@ -48,17 +50,33 @@ export default function Feed({ composerSignal = 0 }) {
     loadPosts();
   }, [loadStats, loadPosts]);
 
+  function handleOpenForm() {
+    if (!user.isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    setShowForm(true);
+  }
+
   useEffect(() => {
     if (composerSignal > 0) {
-      setShowForm(true);
+      if (!user.isAuthenticated) {
+        setShowAuthModal(true);
+      } else {
+        setShowForm(true);
+      }
     }
-  }, [composerSignal]);
+  }, [composerSignal, user.isAuthenticated]);
 
   function handleFilterChange(change) {
     setFilters((prev) => ({ ...prev, ...change }));
   }
 
   async function handleCreatePost(data) {
+    if (!user.isAuthenticated) {
+      signInWithGoogle().catch((err) => alert(err.message));
+      return;
+    }
     setSubmitting(true);
     try {
       await createPost(data, user);
@@ -85,7 +103,7 @@ export default function Feed({ composerSignal = 0 }) {
           </p>
         </div>
         <div className="page-header-actions">
-          <button type="button" className="btn btn-primary" onClick={() => setShowForm(true)}>
+          <button type="button" className="btn btn-primary" onClick={handleOpenForm}>
             + Share a Post
           </button>
         </div>
@@ -159,6 +177,13 @@ export default function Feed({ composerSignal = 0 }) {
           onClose={() => setShowForm(false)}
           onSubmit={handleCreatePost}
           submitting={submitting}
+        />
+      )}
+
+      {showAuthModal && (
+        <AuthModal
+          onClose={() => setShowAuthModal(false)}
+          message="Please sign in with Google to share a lost or found post with the campus community."
         />
       )}
     </div>

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { toggleLike } from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import CommentSection from "./CommentSection.jsx";
+import AuthModal from "./AuthModal.jsx";
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -23,10 +24,15 @@ export default function PostCard({ post }) {
   const [liked, setLiked] = useState(post.liked || false);
   const [likeBusy, setLikeBusy] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [commentCount, setCommentCount] = useState(post.commentCount || 0);
 
   async function handleLike(e) {
     e.preventDefault();
+    if (!user.isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
     if (likeBusy) return;
     setLikeBusy(true);
 
@@ -100,7 +106,11 @@ export default function PostCard({ post }) {
               {post.type === "lost" ? "🔴 LOST" : "🟢 FOUND"}
             </span>
             <span className={`status-pill status-pill--${post.status}`}>
-              {post.status === "resolved" ? "✓ Resolved" : "Open"}
+              {post.status === "resolved"
+                ? "✓ Resolved"
+                : post.status === "claimed"
+                ? "📦 Claimed"
+                : "Open"}
             </span>
           </div>
           <span className="time">
@@ -139,6 +149,11 @@ export default function PostCard({ post }) {
         {post.location && (
           <span className="chip chip--location">
             <span aria-hidden="true">📍</span> {post.location}
+          </span>
+        )}
+        {post.claimerName && (
+          <span className="chip chip--claimed">
+            📦 Claimed by {post.claimerName}
           </span>
         )}
       </div>
@@ -181,6 +196,13 @@ export default function PostCard({ post }) {
             onCountChange={setCommentCount}
           />
         </div>
+      )}
+
+      {showAuthModal && (
+        <AuthModal
+          onClose={() => setShowAuthModal(false)}
+          message="Please sign in with Google to like posts."
+        />
       )}
     </article>
   );

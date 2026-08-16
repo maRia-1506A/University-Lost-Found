@@ -11,11 +11,13 @@ function handleError(error) {
 /**
  * Fetch all posts with their like_count and comment_count.
  * Supports filtering by type, category, and free-text search (q).
+ * Excludes 'resolved' posts so resolved items disappear from the dashboard feed.
  */
 export async function fetchPosts(params = {}) {
   let query = supabase
     .from("posts_with_counts")
     .select("*")
+    .neq("status", "resolved")
     .order("created_at", { ascending: false });
 
   if (params.type && params.type !== "all") {
@@ -37,6 +39,82 @@ export async function fetchPosts(params = {}) {
   handleError(error);
   return data.map(normalizePost);
 }
+
+/**
+ * Claim a post (mark as claimed by claimant).
+ */
+export async function claimPost(postId, user) {
+  if (!user?.id) throw new Error("User must be authenticated");
+  const payload = {
+    claimer_id: user.id,
+    claimer_name: user.name || "Campus Member",
+    status: "claimed",
+  };
+  const { data, error } = await supabase
+    .from("posts")
+    .update(payload)
+    .eq("id", postId)
+    .select()
+    .single();
+  handleError(error);
+
+  if (data && data.author_id && data.author_id !== user.id) {
+    try {
+      await sendNotification({
+        userId: data.author_id,
+        actorId: user.id,
+        actorName: user.name || "Campus Member",
+        actorAvatar: user.avatar || "",
+        type: "claim",
+        postId: data.id,
+        postTitle: data.title,
+        content: `claimed your post "${data.title}"`,
+      });
+    } catch (_) {}
+  }
+
+  return normalizePost(data);
+}
+
+/**
+ * Unclaim a post (claimer cancels claim, resets status to open).
+ */
+export async function unclaimPost(postId, user) {
+  if (!user?.id) throw new Error("User must be authenticated");
+  const payload = {
+    claimer_id: null,
+    claimer_name: null,
+    status: "open",
+  };
+  const { data, error } = await supabase
+    .from("posts")
+    .update(payload)
+    .eq("id", postId)
+    .eq("claimer_id", user.id)
+    .select()
+    .single();
+  handleError(error);
+  return normalizePost(data);
+}
+
+/**
+ * Resolve a claimed or open post (author confirms resolved).
+ */
+export async function resolvePost(postId, user) {
+  if (!user?.id) throw new Error("User must be authenticated");
+  const payload = {
+    status: "resolved",
+  };
+  const { data, error } = await supabase
+    .from("posts")
+    .update(payload)
+    .eq("id", postId)
+    .select()
+    .single();
+  handleError(error);
+  return normalizePost(data);
+}
+
 
 /**
  * Fetch a single post by ID, including like_count and comment_count.
@@ -128,7 +206,7 @@ export async function deletePost(id) {
 /**
  * Toggle a like for a post. Returns { likes: number, liked: boolean }.
  */
-export async function toggleLike(postId, userId) {
+export async function toggleLike(postId, userId, user = null) {
   if (!userId) return { likes: 0, liked: false };
   const { data: existing } = await supabase
     .from("likes")
@@ -149,6 +227,28 @@ export async function toggleLike(postId, userId) {
       .from("likes")
       .insert({ post_id: postId, user_id: userId });
     handleError(error);
+
+    // Send notification to post author
+    try {
+      const { data: targetPost } = await supabase
+        .from("posts")
+        .select("author_id, title")
+        .eq("id", postId)
+        .single();
+
+      if (targetPost && targetPost.author_id && targetPost.author_id !== userId) {
+        await sendNotification({
+          userId: targetPost.author_id,
+          actorId: userId,
+          actorName: user?.name || "Someone",
+          actorAvatar: user?.avatar || "",
+          type: "like",
+          postId,
+          postTitle: targetPost.title,
+          content: "liked your post",
+        });
+      }
+    } catch (_) {}
   }
 
   const { count, error: countErr } = await supabase
@@ -194,7 +294,219 @@ export async function addComment(postId, { text, authorName, authorInitials, aut
     .single();
 
   handleError(error);
+
+  // Send notification to post author
+  try {
+    const { data: targetPost } = await supabase
+      .from("posts")
+      .select("author_id, title")
+      .eq("id", postId)
+      .single();
+
+    if (targetPost && targetPost.author_id && targetPost.author_id !== userId) {
+      await sendNotification({
+        userId: targetPost.author_id,
+        actorId: userId,
+        actorName: authorName || "Someone",
+        actorAvatar: authorAvatar || "",
+        type: "comment",
+        postId,
+        postTitle: targetPost.title,
+        content: text.trim(),
+      });
+    }
+  } catch (_) {}
+
   return normalizeComment(data);
+}
+
+// ── Notifications API ─────────────────────────────────────────────
+
+export async function fetchNotifications(userId) {
+  if (!userId) return [];
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(30);
+
+  if (error) return [];
+  return data || [];
+}
+
+export async function markNotificationRead(notificationId) {
+  const { error } = await supabase
+    .from("notifications")
+    .update({ read: true })
+    .eq("id", notificationId);
+  return !error;
+}
+
+export async function markAllNotificationsRead(userId) {
+  if (!userId) return;
+  const { error } = await supabase
+    .from("notifications")
+    .update({ read: true })
+    .eq("user_id", userId)
+    .eq("read", false);
+  return !error;
+}
+
+export async function sendNotification({ userId, actorId, actorName, actorAvatar, type, postId, postTitle, content }) {
+  if (!userId || userId === actorId) return; // Don't notify self
+  await supabase.from("notifications").insert({
+    user_id: userId,
+    actor_id: actorId || "anonymous",
+    actor_name: actorName || "Someone",
+    actor_avatar: actorAvatar || "",
+    type,
+    post_id: postId || null,
+    post_title: postTitle || "Post",
+    content: content || "",
+  });
+}
+
+// ── Messages / Chat API ──────────────────────────────────────────
+
+export async function fetchUserConversations(userId) {
+  if (!userId) return [];
+  const { data, error } = await supabase
+    .from("messages")
+    .select("*")
+    .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  // Pre-collect partner details from messages sent BY partners
+  const partnerInfoMap = new Map();
+  for (const msg of data) {
+    if (msg.sender_id && msg.sender_id !== userId) {
+      if (!partnerInfoMap.has(msg.sender_id)) {
+        partnerInfoMap.set(msg.sender_id, {
+          name: msg.sender_name || "Campus Member",
+          avatar: msg.sender_avatar || "",
+        });
+      }
+    }
+  }
+
+  // Group messages by conversation partner
+  const convMap = new Map();
+  for (const msg of data) {
+    const partnerId = msg.sender_id === userId ? msg.receiver_id : msg.sender_id;
+    if (!partnerId) continue;
+
+    if (!convMap.has(partnerId)) {
+      const knownPartner = partnerInfoMap.get(partnerId);
+      const partnerName = knownPartner
+        ? knownPartner.name
+        : msg.sender_id !== userId
+        ? msg.sender_name || "Campus Member"
+        : "Campus Member";
+
+      const partnerAvatar = knownPartner
+        ? knownPartner.avatar
+        : msg.sender_id !== userId
+        ? msg.sender_avatar || ""
+        : "";
+
+      convMap.set(partnerId, {
+        partnerId,
+        partnerName,
+        partnerAvatar,
+        postId: msg.post_id,
+        lastMessage: msg.text,
+        lastTime: msg.created_at,
+        unread: msg.receiver_id === userId && !msg.read,
+      });
+    }
+  }
+
+  return Array.from(convMap.values());
+}
+
+export async function fetchDirectMessages(postId, userId1, userId2) {
+  if (!userId1 || !userId2) return [];
+  const { data, error } = await supabase
+    .from("messages")
+    .select("*")
+    .or(`and(sender_id.eq.${userId1},receiver_id.eq.${userId2}),and(sender_id.eq.${userId2},receiver_id.eq.${userId1})`)
+    .order("created_at", { ascending: true });
+
+  if (error || !data) return [];
+  return data;
+}
+
+/**
+ * Mark all unread messages from a specific sender (partnerId) to the
+ * current user (receiverId) as read. Called when the user opens a chat.
+ */
+export async function markMessagesRead(receiverId, senderId) {
+  if (!receiverId || !senderId) return;
+  await supabase
+    .from("messages")
+    .update({ read: true })
+    .eq("receiver_id", receiverId)
+    .eq("sender_id", senderId)
+    .eq("read", false);
+}
+
+export async function sendChatMessage({ postId, receiverId, text, user }) {
+  if (!receiverId || !text.trim()) throw new Error("Receiver and text required");
+
+  // Generate a valid UUID for conversation_id to satisfy DB NOT NULL constraints
+  const conversationId =
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : "00000000-0000-4000-8000-000000000000";
+
+  const payload = {
+    post_id: postId || null,
+    sender_id: user.id,
+    sender_name: user.name || "Campus Member",
+    sender_avatar: user.avatar || "",
+    receiver_id: receiverId,
+    text: text.trim(),
+    conversation_id: conversationId,
+  };
+
+  let { data, error } = await supabase
+    .from("messages")
+    .insert(payload)
+    .select()
+    .single();
+
+  // If conversation_id is not a column in this DB instance, retry without it
+  if (error && error.message && error.message.includes("conversation_id")) {
+    delete payload.conversation_id;
+    const retry = await supabase
+      .from("messages")
+      .insert(payload)
+      .select()
+      .single();
+    data = retry.data;
+    error = retry.error;
+  }
+
+  handleError(error);
+
+  // Send notification to receiver
+  try {
+    await sendNotification({
+      userId: receiverId,
+      actorId: user.id,
+      actorName: user.name || "Campus Member",
+      actorAvatar: user.avatar || "",
+      type: "message",
+      postId,
+      postTitle: "Chat Message",
+      content: text.trim(),
+    });
+  } catch (_) {}
+
+  return data;
 }
 
 // ── Stats ────────────────────────────────────────────────────────
@@ -291,6 +603,25 @@ export async function fetchUserLikedPosts(userId) {
   return (posts || []).map(normalizePost);
 }
 
+/**
+ * Fetch all posts claimed by a specific user.
+ */
+export async function fetchUserClaims(userId) {
+  if (!userId) return [];
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+
+  let query = supabase.from("posts_with_counts").select("*");
+
+  if (isUuid) {
+    query = query.eq("claimer_id", userId);
+  } else {
+    query = query.ilike("claimer_name", `%${userId}%`);
+  }
+
+  const { data, error } = await query.order("created_at", { ascending: false });
+  if (error || !data) return [];
+  return data.map(normalizePost);
+}
 
 // ── Normalization ────────────────────────────────────────────────
 
@@ -315,6 +646,8 @@ function normalizePost(row) {
     authorId: row.author_id ?? null,
     authorName: row.author_name ?? row.contact_name ?? "",
     authorAvatar: row.author_avatar ?? "",
+    claimerId: row.claimer_id ?? null,
+    claimerName: row.claimer_name ?? "",
   };
 }
 

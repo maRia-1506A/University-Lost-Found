@@ -1,10 +1,95 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { fetchNotifications, fetchUserConversations } from "../api.js";
+import { supabase } from "../supabase.js";
+import NotificationDropdown from "./NotificationDropdown.jsx";
+import ConversationsDropdown from "./ConversationsDropdown.jsx";
+import ChatModal from "./ChatModal.jsx";
 
 export default function Navbar({ onCreatePost }) {
   const { user, signInWithGoogle, signOut } = useAuth();
   const [authError, setAuthError] = useState("");
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const [showChatDropdown, setShowChatDropdown] = useState(false);
+  const [activeChatPartner, setActiveChatPartner] = useState(null);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+
+  const loadNotifications = useCallback(async () => {
+    if (!user.id) return;
+    try {
+      const notifs = await fetchNotifications(user.id);
+      setNotifications(notifs);
+    } catch (_) {}
+  }, [user.id]);
+
+  const loadConversations = useCallback(async () => {
+    if (!user.id) return;
+    try {
+      const convs = await fetchUserConversations(user.id);
+      const unread = convs.filter((c) => c.unread).length;
+      setUnreadChatCount(unread);
+    } catch (_) {}
+  }, [user.id]);
+
+  useEffect(() => {
+    if (user.id) {
+      loadNotifications();
+      loadConversations();
+
+      // Realtime listener for new notifications
+      const notifChannel = supabase
+        .channel(`notifs_${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "notifications",
+            filter: `user_id=eq.${user.id}`,
+          },
+          () => {
+            loadNotifications();
+          }
+        )
+        .subscribe();
+
+      // Realtime listener for new chat messages
+      const chatChannel = supabase
+        .channel(`chats_${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "messages",
+            filter: `receiver_id=eq.${user.id}`,
+          },
+          () => {
+            loadConversations();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(notifChannel);
+        supabase.removeChannel(chatChannel);
+      };
+    }
+  }, [user.id, loadNotifications, loadConversations]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (!e.target.closest(".navbar-icon-actions")) {
+        setShowNotifDropdown(false);
+        setShowChatDropdown(false);
+      }
+    }
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
   async function handleSignIn() {
     setAuthError("");
@@ -18,6 +103,8 @@ export default function Navbar({ onCreatePost }) {
       }
     }
   }
+
+  const unreadNotifCount = notifications.filter((n) => !n.read).length;
 
   return (
     <header className="navbar">
@@ -38,6 +125,72 @@ export default function Navbar({ onCreatePost }) {
               ⚠️ {authError}
             </span>
           )}
+
+          {user.isAuthenticated && (
+            <div className="navbar-icon-actions" style={{ display: "flex", gap: "8px", position: "relative" }}>
+              {/* 💬 Direct Messages / Chats Icon */}
+              <div style={{ position: "relative" }}>
+                <button
+                  type="button"
+                  className={`nav-icon-btn ${showChatDropdown ? "nav-icon-btn--active" : ""}`}
+                  onClick={() => {
+                    setShowChatDropdown((prev) => !prev);
+                    setShowNotifDropdown(false);
+                  }}
+                  title="Direct Messages"
+                >
+                  <span>💬</span>
+                  {unreadChatCount > 0 && (
+                    <span className="nav-badge">{unreadChatCount}</span>
+                  )}
+                </button>
+
+                {showChatDropdown && (
+                  <ConversationsDropdown
+                    userId={user.id}
+                    onClose={() => setShowChatDropdown(false)}
+                    onOpenChat={(chatData) => {
+                      setActiveChatPartner(chatData);
+                      setShowChatDropdown(false);
+                      loadConversations();
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* 🔔 Notifications Bell Icon */}
+              <div style={{ position: "relative" }}>
+                <button
+                  type="button"
+                  className={`nav-icon-btn ${showNotifDropdown ? "nav-icon-btn--active" : ""}`}
+                  onClick={() => {
+                    setShowNotifDropdown((prev) => !prev);
+                    setShowChatDropdown(false);
+                  }}
+                  title="Notifications"
+                >
+                  <span>🔔</span>
+                  {unreadNotifCount > 0 && (
+                    <span className="nav-badge">{unreadNotifCount}</span>
+                  )}
+                </button>
+
+                {showNotifDropdown && (
+                  <NotificationDropdown
+                    notifications={notifications}
+                    userId={user.id}
+                    onClose={() => setShowNotifDropdown(false)}
+                    onRefresh={loadNotifications}
+                    onOpenChat={(chatData) => {
+                      setActiveChatPartner(chatData);
+                      setShowNotifDropdown(false);
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
           {user.isAuthenticated ? (
             <div className="user-profile-menu">
               <Link to={`/profile/${user.id}`} className="user-info user-info-link" title="View your profile">
@@ -93,6 +246,17 @@ export default function Navbar({ onCreatePost }) {
           )}
         </div>
       </div>
+
+      {activeChatPartner && (
+        <ChatModal
+          partnerId={activeChatPartner.partnerId}
+          partnerName={activeChatPartner.partnerName}
+          partnerAvatar={activeChatPartner.partnerAvatar}
+          postId={activeChatPartner.postId}
+          onClose={() => setActiveChatPartner(null)}
+          onRead={loadConversations}
+        />
+      )}
     </header>
   );
 }

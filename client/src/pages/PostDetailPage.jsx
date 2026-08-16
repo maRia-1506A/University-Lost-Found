@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { fetchPost, updatePostStatus, deletePost, toggleLike } from "../api.js";
+import { fetchPost, updatePostStatus, deletePost, toggleLike, claimPost, unclaimPost } from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import CommentSection from "../components/CommentSection.jsx";
+import AuthModal from "../components/AuthModal.jsx";
+import ChatModal from "../components/ChatModal.jsx";
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -24,6 +26,8 @@ export default function PostDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showChat, setShowChat] = useState(false);
 
   // Like state — seeded from post.liked / post.likes after load
   const [likes, setLikes] = useState(0);
@@ -51,6 +55,10 @@ export default function PostDetailPage() {
   }, [load]);
 
   async function handleLike() {
+    if (!user.isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
     if (likeBusy) return;
     setLikeBusy(true);
     // Optimistic update
@@ -70,9 +78,41 @@ export default function PostDetailPage() {
     }
   }
 
+  const [claimBusy, setClaimBusy] = useState(false);
+
+  async function handleClaim() {
+    if (!user.isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    if (claimBusy) return;
+    setClaimBusy(true);
+    try {
+      await claimPost(id, user);
+      await load();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setClaimBusy(false);
+    }
+  }
+
+  async function handleUnclaim() {
+    if (claimBusy) return;
+    setClaimBusy(true);
+    try {
+      await unclaimPost(id, user);
+      await load();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setClaimBusy(false);
+    }
+  }
+
   async function handleResolve() {
     try {
-      await updatePostStatus(id, post.status === "open" ? "resolved" : "open");
+      await updatePostStatus(id, post.status === "resolved" ? "open" : "resolved");
       load();
     } catch (err) {
       alert(err.message);
@@ -142,6 +182,9 @@ export default function PostDetailPage() {
           <span className={`type-badge type-badge--${post.type} type-badge--lg`}>
             {post.type === "lost" ? "🔴 LOST" : "🟢 FOUND"}
           </span>
+          {post.status === "claimed" && (
+            <span className="claimed-badge">📦 Claimed</span>
+          )}
           {post.status === "resolved" && (
             <span className="resolved-badge">✓ Resolved</span>
           )}
@@ -163,6 +206,23 @@ export default function PostDetailPage() {
         <p className="post-description post-description--detail">
           {post.description}
         </p>
+
+        {/* ── Claim Banner ── */}
+        {post.status === "claimed" && (
+          <div className="claimed-banner">
+            <span className="claimed-banner-icon">📦</span>
+            <div>
+              <strong>Item Status: Claimed</strong>
+              <p>
+                {user.id === post.authorId
+                  ? `${post.claimerName || "A student"} has claimed this item! Please verify and click "Confirm & Mark as Resolved" once handed over.`
+                  : user.id === post.claimerId
+                  ? "You claimed this item! Waiting for the poster to confirm."
+                  : `Claimed by ${post.claimerName || "another student"}. Awaiting poster confirmation.`}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* ── Detail grid ── */}
         <div className="detail-grid">
@@ -191,7 +251,11 @@ export default function PostDetailPage() {
           <div className="detail-item">
             <span className="detail-label">Status</span>
             <span className={`status-pill status-pill--${post.status}`}>
-              {post.status === "resolved" ? "✓ Resolved" : "Open"}
+              {post.status === "resolved"
+                ? "✓ Resolved"
+                : post.status === "claimed"
+                ? "📦 Claimed"
+                : "Open"}
             </span>
           </div>
         </div>
@@ -225,6 +289,41 @@ export default function PostDetailPage() {
               </p>
             </div>
             <div className="detail-actions compact">
+              {post.authorId && post.authorId !== user.id && post.status === "open" && (
+                <button
+                  className="btn btn-claim"
+                  type="button"
+                  disabled={claimBusy}
+                  onClick={handleClaim}
+                >
+                  {claimBusy ? "Claiming…" : "🙋 Claim this item"}
+                </button>
+              )}
+              {user.id === post.claimerId && post.status === "claimed" && (
+                <button
+                  className="btn btn-ghost"
+                  type="button"
+                  disabled={claimBusy}
+                  onClick={handleUnclaim}
+                >
+                  {claimBusy ? "Cancelling…" : "Cancel claim"}
+                </button>
+              )}
+              {post.authorId && post.authorId !== user.id && (
+                <button
+                  className="btn btn-primary"
+                  type="button"
+                  onClick={() => {
+                    if (!user.isAuthenticated) {
+                      setShowAuthModal(true);
+                    } else {
+                      setShowChat(true);
+                    }
+                  }}
+                >
+                  💬 Chat with Poster
+                </button>
+              )}
               <button
                 className="btn btn-ghost"
                 type="button"
@@ -258,16 +357,20 @@ export default function PostDetailPage() {
         </div>
 
         {/* ── Admin / Author actions ── */}
-        {(!post.authorId || post.authorId === user.id) && (
+        {user.isAuthenticated && post.authorId === user.id && (
           <div className="detail-actions">
             <button
               className={`btn ${
-                post.status === "open" ? "btn-primary" : "btn-ghost"
+                post.status === "open" || post.status === "claimed" ? "btn-primary" : "btn-ghost"
               }`}
               type="button"
               onClick={handleResolve}
             >
-              {post.status === "open" ? "Mark as resolved" : "Reopen post"}
+              {post.status === "claimed"
+                ? "✓ Confirm & Mark as Resolved"
+                : post.status === "open"
+                ? "Mark as resolved"
+                : "Reopen post"}
             </button>
             <button className="btn btn-danger" type="button" onClick={handleDelete}>
               Delete post
@@ -287,6 +390,23 @@ export default function PostDetailPage() {
           />
         </section>
       </article>
+
+      {showAuthModal && (
+        <AuthModal
+          onClose={() => setShowAuthModal(false)}
+          message="Please sign in with Google to like posts."
+        />
+      )}
+
+      {showChat && post && (
+        <ChatModal
+          partnerId={post.authorId}
+          partnerName={post.authorName || post.contactName || "Campus Member"}
+          partnerAvatar={post.authorAvatar || ""}
+          postId={post.id}
+          onClose={() => setShowChat(false)}
+        />
+      )}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import {
   fetchUserPosts,
   fetchUserComments,
   fetchUserLikedPosts,
+  fetchUserClaims,
 } from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import PostCard from "../components/PostCard.jsx";
@@ -26,8 +27,9 @@ export default function ProfilePage() {
   const isSelf = !userId || userId === "me" || userId === currentUser.id;
   const targetUserId = isSelf ? currentUser.id : userId;
 
-  const [activeTab, setActiveTab] = useState("posts"); // 'posts' | 'comments' | 'likes'
+  const [activeTab, setActiveTab] = useState("posts"); // 'posts' | 'claims' | 'comments' | 'likes'
   const [userPosts, setUserPosts] = useState([]);
+  const [userClaims, setUserClaims] = useState([]);
   const [userComments, setUserComments] = useState([]);
   const [userLikedPosts, setUserLikedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,8 +41,9 @@ export default function ProfilePage() {
 
     async function loadProfileData() {
       try {
-        const [posts, comments, likedPosts] = await Promise.all([
+        const [posts, claims, comments, likedPosts] = await Promise.all([
           fetchUserPosts(targetUserId),
+          fetchUserClaims(targetUserId),
           fetchUserComments(targetUserId),
           fetchUserLikedPosts(targetUserId),
         ]);
@@ -48,6 +51,7 @@ export default function ProfilePage() {
         if (isCancelled) return;
 
         setUserPosts(posts);
+        setUserClaims(claims);
         setUserComments(comments);
         setUserLikedPosts(likedPosts);
 
@@ -175,6 +179,19 @@ export default function ProfilePage() {
 
           <div
             className={`profile-stat-box ${
+              activeTab === "claims" ? "active" : ""
+            }`}
+            onClick={() => setActiveTab("claims")}
+          >
+            <div className="stat-icon-badge stat-icon--claims">📦</div>
+            <div className="stat-data">
+              <span className="profile-stat-number">{userClaims.length}</span>
+              <span className="profile-stat-label">Claimed Items</span>
+            </div>
+          </div>
+
+          <div
+            className={`profile-stat-box ${
               activeTab === "comments" ? "active" : ""
             }`}
             onClick={() => setActiveTab("comments")}
@@ -232,7 +249,28 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* ── 2. Comments Tab ── */}
+            {/* ── 2. Claims Tab ── */}
+            {activeTab === "claims" && (
+              <div className="post-list">
+                {userClaims.length === 0 ? (
+                  <div className="empty-state">
+                    <p className="empty-icon">📦</p>
+                    <h3>No claimed items yet</h3>
+                    <p>
+                      {isSelf
+                        ? "Items you claim will show up here."
+                        : `${displayUser.name} hasn't claimed any items yet.`}
+                    </p>
+                  </div>
+                ) : (
+                  userClaims.map((post) => (
+                    <PostCard key={post.id} post={post} />
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* ── 3. Comments Tab ── */}
             {activeTab === "comments" && (
               <div className="profile-comments-list">
                 {userComments.length === 0 ? (
@@ -266,7 +304,7 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* ── 3. Liked Items Tab ── */}
+            {/* ── 4. Liked Items Tab ── */}
             {activeTab === "likes" && (
               <div className="post-list">
                 {userLikedPosts.length === 0 ? (

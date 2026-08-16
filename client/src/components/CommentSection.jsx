@@ -16,7 +16,7 @@ function timeAgo(dateStr) {
 }
 
 export default function CommentSection({ postId, onCountChange }) {
-  const { user } = useAuth();
+  const { user, signInWithGoogle } = useAuth();
 
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
@@ -40,11 +40,17 @@ export default function CommentSection({ postId, onCountChange }) {
   }, [postId, onCountChange]);
 
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    if (user.isAuthenticated) {
+      inputRef.current?.focus();
+    }
+  }, [user.isAuthenticated]);
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!user.isAuthenticated) {
+      signInWithGoogle().catch((err) => alert(err.message || "Please sign in to comment"));
+      return;
+    }
     const trimmed = text.trim();
     if (!trimmed) return;
     setSubmitting(true);
@@ -109,43 +115,65 @@ export default function CommentSection({ postId, onCountChange }) {
       )}
 
       {/* ── New comment form ── */}
-      <form className="comment-form" onSubmit={handleSubmit}>
-        <div className="comment-input-row">
-          {user.avatar ? (
-            <img
-              src={user.avatar}
-              alt={user.name}
-              className="comment-avatar-img"
-              referrerPolicy="no-referrer"
+      {user.isAuthenticated ? (
+        <form className="comment-form" onSubmit={handleSubmit}>
+          <div className="comment-input-row">
+            {user.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="comment-avatar-img"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="comment-avatar">{user.initials}</div>
+            )}
+            <input
+              ref={inputRef}
+              className="comment-input"
+              type="text"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={`Comment as ${user.name}…`}
+              maxLength={500}
+              disabled={submitting}
             />
-          ) : (
-            <div className="comment-avatar">{user.initials}</div>
-          )}
-          <input
-            ref={inputRef}
-            className="comment-input"
-            type="text"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={
-              user.isAuthenticated
-                ? `Comment as ${user.name}…`
-                : "Write a comment…"
-            }
-            maxLength={500}
-            disabled={submitting}
-          />
+            <button
+              type="submit"
+              className="comment-send-btn"
+              disabled={submitting || !text.trim()}
+              aria-label="Send comment"
+            >
+              {submitting ? "…" : "Send"}
+            </button>
+          </div>
+          {error && <p className="comment-error">{error}</p>}
+        </form>
+      ) : (
+        <div
+          className="comment-login-prompt"
+          style={{
+            textAlign: "center",
+            padding: "16px",
+            background: "rgba(255, 255, 255, 0.05)",
+            borderRadius: "10px",
+            marginTop: "12px",
+            border: "1px dashed rgba(255, 255, 255, 0.15)",
+          }}
+        >
+          <p style={{ margin: "0 0 10px 0", fontSize: "0.9rem", opacity: 0.85 }}>
+            Sign in with Google to write a comment
+          </p>
           <button
-            type="submit"
-            className="comment-send-btn"
-            disabled={submitting || !text.trim()}
-            aria-label="Send comment"
+            type="button"
+            className="google-signin-btn"
+            style={{ margin: "0 auto", display: "inline-flex" }}
+            onClick={() => signInWithGoogle().catch((err) => alert(err.message))}
           >
-            {submitting ? "…" : "Send"}
+            <span>Sign in with Google</span>
           </button>
         </div>
-        {error && <p className="comment-error">{error}</p>}
-      </form>
+      )}
     </div>
   );
 }

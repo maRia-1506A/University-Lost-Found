@@ -6,12 +6,17 @@ export default function Footer() {
     <footer className="footer">
       <div className="footer-inner">
         <Link to="/" className="footer-brand">
-          <img src="/logo.png" alt="UniFind Logo" className="footer-logo-img" />
-          <span className="footer-brand-text">UniFind</span>
+          <img src="/logo.png" alt="UniFind" className="footer-logo-img" />
+          <span className="footer-brand-name">UniFind</span>
         </Link>
-        <p className="footer-text">
-          Campus Lost &amp; Found &middot; Reuniting lost possessions across campus
+
+        <p className="footer-tagline">
+          Reuniting lost possessions across campus
         </p>
+
+        <span className="footer-copy">
+          &copy; {new Date().getFullYear()} UniFind
+        </span>
       </div>
     </footer>
   );

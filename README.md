@@ -1,52 +1,41 @@
 # UniFind — Campus Lost & Found
 
-A full-stack campus lost & found platform built with **React + Vite** (frontend) and **Node.js + Express** (backend).
+A modern campus lost & found web application built with **React + Vite** and **Supabase** (Database, Authentication & Realtime data).
 
 ## Features 
 
-- 📋 **Scrollable feed** of all lost & found posts
-- 🔴 **Lost** / 🟢 **Found** post types with color-coded badges
-- ❤️ **Like posts** (per-user, persisted on server)
-- 💬 **Comments** on every post — expandable inline on the feed, full view on detail page
-- 🔍 **Filter by type** (All / Lost / Found) and **search** by keyword
-- ✏️ **Post form** modal with image upload, category, location, contact info
-- ✓ **Mark as Resolved / Reopen** on the detail page
-- 💾 Data persisted to `server/data/posts.json` (no database required)
+- 📋 **Interactive Feed**: Browse lost and found items in real-time.
+- 🔴 **Lost** / 🟢 **Found**: Clear visual badges and status indicators.
+- 🔐 **Google Authentication**: Sign in with Google via Supabase OAuth or use instant anonymous mode.
+- ❤️ **Likes & Comments**: Like posts and comment inline on the feed or on detail pages.
+- 🔍 **Filtering & Search**: Filter by category, status, type (Lost/Found), or keywords.
+- 👤 **User Profiles**: Track your reported posts, comments, and saved/liked items.
 
 ---
 
-## Project Structure
+## Setup & Environment Setup
 
+### 1 — Supabase Database Setup
+
+1. Create a project on [Supabase](https://supabase.com/).
+2. Run the SQL statements in [`supabase/schema.sql`](file:///e:/CODE/University%20Lost%20%26%20Found/supabase/schema.sql) inside your **Supabase Dashboard → SQL Editor**.
+3. Create `client/.env.local` with your Supabase credentials:
+
+```env
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1... (Your Anon Public Key)
 ```
-University_Lost_&_Found/
-├── client/          React + Vite frontend (port 5173)
-└── server/          Node + Express backend (port 5000)
-```
+
+### 2 — Google Authentication Setup (Optional)
+
+1. Enable Google OAuth under **Supabase Dashboard → Authentication → Providers → Google**.
+2. Add `http://localhost:5173` to **Supabase Dashboard → Authentication → Redirect URLs**.
 
 ---
 
-## Running the App
+## Running the App Locally
 
-### 1 — Start the backend
-
-Open a terminal in `server/`:
-
-```bash
-cd server
-node server.js
-```
-
-Or with auto-reload on changes:
-
-```bash
-node --watch server.js
-```
-
-Expected output: `Lost & Found server running on http://localhost:5000`
-
-### 2 — Start the frontend
-
-Open a **second** terminal in `client/`:
+Open a terminal in the project directory:
 
 ```bash
 cd client
@@ -54,20 +43,3 @@ npm run dev
 ```
 
 Then open **http://localhost:5173** in your browser.
-
-> The Vite dev server automatically proxies `/api` requests to `http://localhost:5000` — no CORS issues.
-
----
-
-## API Reference
-
-| Method | Route | Description |
-|--------|-------|-------------|
-| GET | `/api/posts?type=&q=&category=` | List posts (filterable) |
-| GET | `/api/posts/:id` | Get single post |
-| POST | `/api/posts` | Create post |
-| PATCH | `/api/posts/:id/status` | Update open/resolved status |
-| DELETE | `/api/posts/:id` | Delete post |
-| POST | `/api/posts/:id/like` | Toggle like (body: `{ userId }`) |
-| GET | `/api/posts/:id/comments` | Get comments |
-| POST | `/api/posts/:id/comments` | Add comment (body: `{ text, authorName, authorInitials }`) |

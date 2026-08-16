@@ -17,9 +17,21 @@ export function AuthProvider({ children }) {
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         setSession(session);
         setLoading(false);
+        if (event === "SIGNED_IN") {
+          if (window.location.hash && window.location.hash.includes("access_token")) {
+            window.history.replaceState(null, "", window.location.pathname);
+          }
+          if (window.location.pathname !== "/") {
+            window.location.href = window.location.origin + "/";
+          }
+        } else if (event === "SIGNED_OUT") {
+          if (window.location.pathname !== "/") {
+            window.location.href = window.location.origin + "/";
+          }
+        }
       }
     );
 
@@ -39,6 +51,9 @@ export function AuthProvider({ children }) {
   async function signOut() {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+    if (window.location.pathname !== "/") {
+      window.location.href = window.location.origin + "/";
+    }
   }
 
   // Active user object: Google user if authenticated, else anonymous user
