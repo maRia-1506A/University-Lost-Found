@@ -186,7 +186,7 @@ export default function ProfilePage() {
             <div className="stat-icon-badge stat-icon--claims">📦</div>
             <div className="stat-data">
               <span className="profile-stat-number">{userClaims.length}</span>
-              <span className="profile-stat-label">Claimed Items</span>
+              <span className="profile-stat-label">Claims & Reports</span>
             </div>
           </div>
 
@@ -255,11 +255,11 @@ export default function ProfilePage() {
                 {userClaims.length === 0 ? (
                   <div className="empty-state">
                     <p className="empty-icon">📦</p>
-                    <h3>No claimed items yet</h3>
+                    <h3>No claimed or reported items yet</h3>
                     <p>
                       {isSelf
-                        ? "Items you claim will show up here."
-                        : `${displayUser.name} hasn't claimed any items yet.`}
+                        ? "Items you claim or report finding will show up here."
+                        : `${displayUser.name} hasn't claimed or reported any items yet.`}
                     </p>
                   </div>
                 ) : (

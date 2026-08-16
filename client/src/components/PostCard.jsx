@@ -109,7 +109,9 @@ export default function PostCard({ post }) {
               {post.status === "resolved"
                 ? "✓ Resolved"
                 : post.status === "claimed"
-                ? "📦 Claimed"
+                ? post.type === "lost"
+                  ? "🔍 Found Reported"
+                  : "📦 Ownership Claimed"
                 : "Open"}
             </span>
           </div>
@@ -151,11 +153,21 @@ export default function PostCard({ post }) {
             <span aria-hidden="true">📍</span> {post.location}
           </span>
         )}
-        {post.claimerName && (
+        {post.claimType ? (
           <span className="chip chip--claimed">
-            📦 Claimed by {post.claimerName}
+            {post.claimType === "found_report"
+              ? "🔍 Reported Found"
+              : post.claimType === "owner_recovery"
+              ? "✓ Item Recovered"
+              : "📦 Claimed as My Item"}
           </span>
-        )}
+        ) : post.claimerName ? (
+          <span className="chip chip--claimed">
+            {post.type === "lost"
+              ? `🔍 Found reported by ${post.claimerName}`
+              : `📦 Claimed by ${post.claimerName}`}
+          </span>
+        ) : null}
       </div>
 
       {/* ── Action bar ── */}

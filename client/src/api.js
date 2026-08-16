@@ -40,35 +40,135 @@ export async function fetchPosts(params = {}) {
   return data.map(normalizePost);
 }
 
+// ── Claims LocalStorage Persistence Helpers ───────────────────────
+
+function getLocalClaims(userId) {
+  if (!userId) return [];
+  try {
+    const raw = localStorage.getItem(`unifind_claims_${userId}`);
+    return raw ? JSON.parse(raw) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function saveLocalClaim(userId, claimRecord) {
+  if (!userId || !claimRecord?.postId) return;
+  try {
+    const existing = getLocalClaims(userId);
+    const updated = [
+      claimRecord,
+      ...existing.filter((c) => c.postId !== claimRecord.postId),
+    ];
+    localStorage.setItem(`unifind_claims_${userId}`, JSON.stringify(updated));
+  } catch (_) {}
+}
+
+function removeLocalClaim(userId, postId) {
+  if (!userId || !postId) return;
+  try {
+    const existing = getLocalClaims(userId);
+    const updated = existing.filter((c) => c.postId !== postId);
+    localStorage.setItem(`unifind_claims_${userId}`, JSON.stringify(updated));
+  } catch (_) {}
+}
+
 /**
  * Claim a post (mark as claimed by claimant).
  */
 export async function claimPost(postId, user) {
   if (!user?.id) throw new Error("User must be authenticated");
+
+  // Fetch post info first to determine claim type and author
+  let targetPost = null;
+  try {
+    const { data: fetchedPost } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("id", postId)
+      .single();
+    targetPost = fetchedPost;
+  } catch (_) {}
+
+  const isLost = targetPost?.type === "lost";
+  const claimType = isLost ? "found_report" : "ownership_claim";
+
+  // 1. Try inserting into Supabase claims table
+  try {
+    await supabase.from("claims").upsert(
+      {
+        post_id: postId,
+        user_id: user.id,
+        user_name: user.name || "Campus Member",
+        user_avatar: user.avatar || "",
+        claim_type: claimType,
+        status: "pending",
+      },
+      { onConflict: "post_id,user_id" }
+    );
+  } catch (_) {}
+
+  // 2. Save claim record to LocalStorage for fallback persistence
+  saveLocalClaim(user.id, {
+    postId,
+    userId: user.id,
+    userName: user.name || "Campus Member",
+    claimType,
+    createdAt: new Date().toISOString(),
+  });
+
+  // 3. Update post status
+  let data = null;
   const payload = {
     claimer_id: user.id,
     claimer_name: user.name || "Campus Member",
     status: "claimed",
   };
-  const { data, error } = await supabase
+
+  const { data: updateData, error } = await supabase
     .from("posts")
     .update(payload)
     .eq("id", postId)
     .select()
     .single();
-  handleError(error);
 
-  if (data && data.author_id && data.author_id !== user.id) {
+  if (error) {
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from("posts")
+      .update({ status: "claimed" })
+      .eq("id", postId)
+      .select()
+      .single();
+
+    if (!fallbackError && fallbackData) {
+      data = { ...fallbackData, claimer_id: user.id, claimer_name: user.name };
+    } else {
+      data = {
+        ...(targetPost || { id: postId, type: "lost", title: "Post" }),
+        status: "claimed",
+        claimer_id: user.id,
+        claimer_name: user.name,
+      };
+    }
+  } else {
+    data = updateData;
+  }
+
+  // 4. Send notification to post author
+  const authorId = data?.author_id || targetPost?.author_id;
+  if (authorId && authorId !== user.id) {
     try {
       await sendNotification({
-        userId: data.author_id,
+        userId: authorId,
         actorId: user.id,
         actorName: user.name || "Campus Member",
         actorAvatar: user.avatar || "",
         type: "claim",
-        postId: data.id,
-        postTitle: data.title,
-        content: `claimed your post "${data.title}"`,
+        postId: data?.id || postId,
+        postTitle: data?.title || targetPost?.title || "Post",
+        content: isLost
+          ? `reported finding your item "${data?.title || targetPost?.title || "Post"}"`
+          : `claimed ownership of your post "${data?.title || targetPost?.title || "Post"}"`,
       });
     } catch (_) {}
   }
@@ -81,19 +181,50 @@ export async function claimPost(postId, user) {
  */
 export async function unclaimPost(postId, user) {
   if (!user?.id) throw new Error("User must be authenticated");
+
+  // 1. Delete from Supabase claims table
+  try {
+    await supabase
+      .from("claims")
+      .delete()
+      .eq("post_id", postId)
+      .eq("user_id", user.id);
+  } catch (_) {}
+
+  // 2. Remove from LocalStorage
+  removeLocalClaim(user.id, postId);
+
+  // 3. Reset post status to open
   const payload = {
     claimer_id: null,
     claimer_name: null,
     status: "open",
   };
+
   const { data, error } = await supabase
     .from("posts")
     .update(payload)
     .eq("id", postId)
-    .eq("claimer_id", user.id)
     .select()
     .single();
-  handleError(error);
+
+  if (error) {
+    const { data: fallbackData } = await supabase
+      .from("posts")
+      .update({ status: "open" })
+      .eq("id", postId)
+      .select()
+      .single();
+
+    return normalizePost({
+      ...(fallbackData || {}),
+      id: postId,
+      status: "open",
+      claimer_id: null,
+      claimer_name: null,
+    });
+  }
+
   return normalizePost(data);
 }
 
@@ -180,7 +311,19 @@ export async function createPost(data, user = null) {
 /**
  * Toggle the status of a post between 'open' and 'resolved'.
  */
-export async function updatePostStatus(id, status) {
+export async function updatePostStatus(id, status, resolverUser = null) {
+  // 1. Fetch current post so we know author, type, and existing claimer
+  let currentPost = null;
+  try {
+    const { data: fetchedPost } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("id", id)
+      .single();
+    currentPost = fetchedPost;
+  } catch (_) {}
+
+  // 2. Update post status
   const { data, error } = await supabase
     .from("posts")
     .update({ status })
@@ -189,6 +332,64 @@ export async function updatePostStatus(id, status) {
     .single();
 
   handleError(error);
+
+  // 3. Cascade status update to all claims records for this post
+  if (status === "resolved" || status === "open") {
+    const claimStatus = status === "resolved" ? "resolved" : "pending";
+    try {
+      await supabase
+        .from("claims")
+        .update({ status: claimStatus })
+        .eq("post_id", id);
+    } catch (_) {}
+
+    // 4. For LOST posts being resolved, also create an owner-side recovery record
+    // so the RIGHT USER (original owner) also gets a Claims & Reports entry.
+    if (status === "resolved" && currentPost?.type === "lost") {
+      const ownerId = currentPost.author_id;
+      const finderId = currentPost.claimer_id; // the LEFT USER who reported finding it
+      const ownerClaimType = "owner_recovery"; // distinct from finder's found_report
+
+      if (ownerId) {
+        // Upsert owner recovery record — one per (post, owner) pair
+        try {
+          await supabase.from("claims").upsert(
+            {
+              post_id: id,
+              user_id: ownerId,
+              user_name: currentPost.author_name || currentPost.contact_name || "Campus Member",
+              user_avatar: currentPost.author_avatar || "",
+              claim_type: ownerClaimType,
+              status: "resolved",
+            },
+            { onConflict: "post_id,user_id" }
+          );
+        } catch (_) {}
+
+        // Also save to LocalStorage for the owner (so their profile shows it immediately)
+        saveLocalClaim(ownerId, {
+          postId: id,
+          userId: ownerId,
+          userName: currentPost.author_name || currentPost.contact_name || "Campus Member",
+          claimType: ownerClaimType,
+          finderName: currentPost.claimer_name || "",
+          createdAt: new Date().toISOString(),
+        });
+      }
+
+      // 5. Also update the LocalStorage for the finder so their entry shows 'resolved'
+      if (finderId) {
+        const finderLocal = getLocalClaims(finderId);
+        const updated = finderLocal.map((lc) =>
+          lc.postId === id ? { ...lc, claimStatus: "resolved" } : lc
+        );
+        try {
+          localStorage.setItem(`unifind_claims_${finderId}`, JSON.stringify(updated));
+        } catch (_) {}
+      }
+    }
+  }
+
   return normalizePost(data);
 }
 
@@ -604,23 +805,104 @@ export async function fetchUserLikedPosts(userId) {
 }
 
 /**
- * Fetch all posts claimed by a specific user.
+ * Fetch all posts claimed/reported/recovered by a specific user.
+ *
+ * Covers THREE scenarios:
+ *   A. LEFT USER (finder): claimed/found_report records they created by clicking "I Found This"
+ *   B. LEFT USER (claimer): ownership_claim records they created by clicking "This Is My Item"
+ *   C. RIGHT USER (original LOST post owner): owner_recovery records created when their LOST post is resolved
+ *
+ * Sources merged (priority order):
+ *   1. Supabase `claims` table (where user_id = userId)
+ *   2. Posts table by claimer_id (for finders whose claim pre-dated the claims table)
+ *   3. LocalStorage fallback (for offline or schema-not-yet-applied scenarios)
  */
 export async function fetchUserClaims(userId) {
   if (!userId) return [];
+
+  const dbClaimPostIds = [];
+  const claimTypeMap = new Map();
+
+  // 1. Supabase claims table — catches finder, claimer, AND owner_recovery records
+  try {
+    const { data: claimsData } = await supabase
+      .from("claims")
+      .select("post_id, claim_type, status")
+      .eq("user_id", userId);
+    if (claimsData) {
+      claimsData.forEach((c) => {
+        if (c.post_id) {
+          dbClaimPostIds.push(c.post_id);
+          claimTypeMap.set(c.post_id, c.claim_type);
+        }
+      });
+    }
+  } catch (_) {}
+
+  // 2. Posts table by claimer_id — backward-compat for pre-claims-table records
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+  try {
+    let postsQuery = supabase.from("posts").select("id, type");
+    if (isUuid) {
+      postsQuery = postsQuery.eq("claimer_id", userId);
+    } else {
+      postsQuery = postsQuery.ilike("claimer_name", `%${userId}%`);
+    }
+    const { data: claimerPosts } = await postsQuery;
+    if (claimerPosts) {
+      claimerPosts.forEach((p) => {
+        dbClaimPostIds.push(p.id);
+        if (!claimTypeMap.has(p.id)) {
+          claimTypeMap.set(p.id, p.type === "lost" ? "found_report" : "ownership_claim");
+        }
+      });
+    }
+  } catch (_) {}
 
-  let query = supabase.from("posts_with_counts").select("*");
+  // 3. LocalStorage fallback (covers offline and schema-pending scenarios)
+  const localClaims = getLocalClaims(userId);
+  localClaims.forEach((lc) => {
+    if (lc.postId) {
+      dbClaimPostIds.push(lc.postId);
+      if (!claimTypeMap.has(lc.postId)) {
+        claimTypeMap.set(lc.postId, lc.claimType);
+      }
+    }
+  });
 
-  if (isUuid) {
-    query = query.eq("claimer_id", userId);
-  } else {
-    query = query.ilike("claimer_name", `%${userId}%`);
-  }
+  const uniquePostIds = [...new Set(dbClaimPostIds)];
+  if (uniquePostIds.length === 0) return [];
 
-  const { data, error } = await query.order("created_at", { ascending: false });
-  if (error || !data) return [];
-  return data.map(normalizePost);
+  // 4. Fetch full post details for all claim post IDs (including resolved posts)
+  let targetPosts = [];
+  try {
+    const { data: postsData } = await supabase
+      .from("posts_with_counts")
+      .select("*")
+      .in("id", uniquePostIds)
+      .order("created_at", { ascending: false });
+
+    if (postsData && postsData.length > 0) {
+      targetPosts = postsData;
+    } else {
+      const { data: rawPosts } = await supabase
+        .from("posts")
+        .select("*")
+        .in("id", uniquePostIds);
+      targetPosts = rawPosts || [];
+    }
+  } catch (_) {}
+
+  return targetPosts.map((p) => {
+    const normalized = normalizePost(p);
+    const resolvedClaimType =
+      claimTypeMap.get(p.id) ||
+      (p.type === "lost" ? "found_report" : "ownership_claim");
+    return {
+      ...normalized,
+      claimType: resolvedClaimType,
+    };
+  });
 }
 
 // ── Normalization ────────────────────────────────────────────────

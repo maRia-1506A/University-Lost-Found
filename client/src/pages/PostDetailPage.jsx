@@ -27,6 +27,7 @@ export default function PostDetailPage() {
   const [error, setError] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [actionCardStep, setActionCardStep] = useState("normal"); // 'normal' | 'confirm' | 'submitted'
   const [showChat, setShowChat] = useState(false);
 
   // Like state — seeded from post.liked / post.likes after load
@@ -80,16 +81,21 @@ export default function PostDetailPage() {
 
   const [claimBusy, setClaimBusy] = useState(false);
 
-  async function handleClaim() {
+  function handleActionClick() {
     if (!user.isAuthenticated) {
       setShowAuthModal(true);
       return;
     }
+    setActionCardStep("confirm");
+  }
+
+  async function handleConfirmAction() {
     if (claimBusy) return;
     setClaimBusy(true);
     try {
       await claimPost(id, user);
       await load();
+      setActionCardStep("submitted");
     } catch (err) {
       alert(err.message);
     } finally {
@@ -102,6 +108,7 @@ export default function PostDetailPage() {
     setClaimBusy(true);
     try {
       await unclaimPost(id, user);
+      setActionCardStep("normal");
       await load();
     } catch (err) {
       alert(err.message);
@@ -167,6 +174,11 @@ export default function PostDetailPage() {
     );
   }
 
+  const isOwner = !!(user.isAuthenticated && post.authorId && user.id === post.authorId);
+  const isResolved = post.status === "resolved";
+  const isClaimed = post.status === "claimed";
+  const isClaimer = !!(user.id && post.claimerId && user.id === post.claimerId);
+
   return (
     <div className="detail-page">
       <Link to="/" className="back-link">
@@ -182,10 +194,12 @@ export default function PostDetailPage() {
           <span className={`type-badge type-badge--${post.type} type-badge--lg`}>
             {post.type === "lost" ? "🔴 LOST" : "🟢 FOUND"}
           </span>
-          {post.status === "claimed" && (
-            <span className="claimed-badge">📦 Claimed</span>
+          {isClaimed && (
+            <span className="claimed-badge">
+              {post.type === "lost" ? "🔍 Found Reported" : "📦 Ownership Claimed"}
+            </span>
           )}
-          {post.status === "resolved" && (
+          {isResolved && (
             <span className="resolved-badge">✓ Resolved</span>
           )}
           <span className="time" style={{ marginLeft: "auto" }}>
@@ -207,18 +221,28 @@ export default function PostDetailPage() {
           {post.description}
         </p>
 
-        {/* ── Claim Banner ── */}
-        {post.status === "claimed" && (
+        {/* ── Status Banner ── */}
+        {isClaimed && (
           <div className="claimed-banner">
-            <span className="claimed-banner-icon">📦</span>
+            <span className="claimed-banner-icon">
+              {post.type === "lost" ? "🔍" : "📦"}
+            </span>
             <div>
-              <strong>Item Status: Claimed</strong>
+              <strong>
+                Item Status: {post.type === "lost" ? "Found Reported" : "Ownership Claimed"}
+              </strong>
               <p>
-                {user.id === post.authorId
-                  ? `${post.claimerName || "A student"} has claimed this item! Please verify and click "Confirm & Mark as Resolved" once handed over.`
-                  : user.id === post.claimerId
-                  ? "You claimed this item! Waiting for the poster to confirm."
-                  : `Claimed by ${post.claimerName || "another student"}. Awaiting poster confirmation.`}
+                {post.type === "lost"
+                  ? isOwner
+                    ? `${post.claimerName || "A student"} reported finding your item! You can contact them below to arrange the return.`
+                    : isClaimer
+                    ? "You reported finding this item! Waiting for the poster to confirm return."
+                    : `Reported found by ${post.claimerName || "another student"}. Awaiting poster confirmation.`
+                  : isOwner
+                    ? `${post.claimerName || "A student"} believes this item belongs to them! You can contact them below to verify and arrange the return.`
+                    : isClaimer
+                    ? "You claimed this item belongs to you! Waiting for the finder to verify."
+                    : `Claimed by ${post.claimerName || "another student"}. Awaiting finder confirmation.`}
               </p>
             </div>
           </div>
@@ -251,10 +275,12 @@ export default function PostDetailPage() {
           <div className="detail-item">
             <span className="detail-label">Status</span>
             <span className={`status-pill status-pill--${post.status}`}>
-              {post.status === "resolved"
+              {isResolved
                 ? "✓ Resolved"
-                : post.status === "claimed"
-                ? "📦 Claimed"
+                : isClaimed
+                ? post.type === "lost"
+                  ? "🔍 Found Reported"
+                  : "📦 Ownership Claimed"
                 : "Open"}
             </span>
           </div>
@@ -273,110 +299,239 @@ export default function PostDetailPage() {
           </button>
         </div>
 
-        {/* ── Contact box ── */}
+        {/* ── Unified Central Action Area ── */}
         <div className="contact-box">
-          <div className="contact-box-header">
-            <div>
-              <h3>
-                {post.type === "lost"
-                  ? "Someone may have found it"
-                  : "Claim this item"}
+          {isResolved ? (
+            /* ── CASE 1: RESOLVED ── */
+            <div className="action-card-resolved" style={{ textAlign: "center", padding: "0.75rem 0" }}>
+              <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>✓</div>
+              <h3 style={{ fontSize: "1.25rem", fontWeight: "700", marginBottom: "0.5rem", color: "var(--text-primary, #0f172a)" }}>
+                Resolved
               </h3>
-              <p className="contact-helper">
+              <p style={{ color: "var(--text-secondary, #64748b)", fontSize: "0.9375rem", marginBottom: isOwner ? "1.25rem" : "0.5rem", lineHeight: "1.5", maxWidth: "420px", margin: "0 auto 1rem auto" }}>
                 {post.type === "lost"
-                  ? "Reach out if you spotted this item or have it with you."
-                  : "Use the contact details below to claim it quickly."}
+                  ? "This lost item has been found and the case is closed."
+                  : "This found item has been returned to its owner and the case is closed."}
               </p>
+              {isOwner && (
+                <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", maxWidth: "340px", margin: "0 auto" }}>
+                  <button className="btn btn-ghost" type="button" onClick={handleResolve}>
+                    Reopen post
+                  </button>
+                  <button className="btn btn-danger" type="button" onClick={handleDelete}>
+                    Delete post
+                  </button>
+                </div>
+              )}
             </div>
-            <div className="detail-actions compact">
-              {post.authorId && post.authorId !== user.id && post.status === "open" && (
-                <button
-                  className="btn btn-claim"
-                  type="button"
-                  disabled={claimBusy}
-                  onClick={handleClaim}
-                >
-                  {claimBusy ? "Claiming…" : "🙋 Claim this item"}
-                </button>
+          ) : isOwner ? (
+            /* ── CASE 2: POST OWNER (OPEN or CLAIMED) ── */
+            <>
+              <div className="contact-box-header">
+                <div>
+                  <h3>
+                    {post.type === "lost"
+                      ? "Your Lost Item"
+                      : "You posted this found item"}
+                  </h3>
+                  <p className="contact-helper">
+                    {post.type === "lost"
+                      ? "You posted this item as lost. Manage your post or confirm when it has been found and returned."
+                      : "You reported finding this item. Manage your post or confirm when it has been handed over to its owner."}
+                  </p>
+                </div>
+                <div className="detail-actions compact">
+                  <button
+                    className={`btn ${isClaimed || post.status === "open" ? "btn-primary" : "btn-ghost"}`}
+                    type="button"
+                    onClick={handleResolve}
+                  >
+                    {isClaimed
+                      ? "✓ Confirm & Mark as Resolved"
+                      : "Mark as resolved"}
+                  </button>
+                  <button className="btn btn-danger" type="button" onClick={handleDelete}>
+                    Delete post
+                  </button>
+                  <button
+                    className="btn btn-ghost"
+                    type="button"
+                    onClick={handleCopyContact}
+                  >
+                    Copy contact
+                  </button>
+                  <button
+                    className="btn btn-ghost"
+                    type="button"
+                    onClick={handleCopyLink}
+                  >
+                    Share link
+                  </button>
+                </div>
+              </div>
+              {post.contactName && (
+                <p>
+                  <strong>Contact:</strong> {post.contactName}
+                </p>
               )}
-              {user.id === post.claimerId && post.status === "claimed" && (
+              {post.contactMethod && (
+                <p>
+                  <strong>Details:</strong> {post.contactMethod}
+                </p>
+              )}
+              {copyMessage && <p className="copy-feedback">{copyMessage}</p>}
+            </>
+          ) : actionCardStep === "confirm" ? (
+            /* ── CASE 3a: OTHER USER - CONFIRM STEP ── */
+            <div className="action-card-confirm" style={{ textAlign: "center", padding: "0.5rem 0" }}>
+              <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>
+                {post.type === "lost" ? "🔍" : "📦"}
+              </div>
+              <h3 style={{ fontSize: "1.25rem", fontWeight: "700", marginBottom: "0.5rem", color: "var(--text-primary, #0f172a)" }}>
+                {post.type === "lost" ? "Found this item?" : "Is this your item?"}
+              </h3>
+              <p style={{ color: "var(--text-secondary, #64748b)", fontSize: "0.9375rem", marginBottom: "1.25rem", lineHeight: "1.5", maxWidth: "420px", margin: "0 auto 1.25rem auto" }}>
+                {post.type === "lost"
+                  ? "If you found this item, let the owner know so you can arrange how to return it."
+                  : "If you believe this item belongs to you, contact the person who found it to arrange verification and return."}
+              </p>
+              <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", maxWidth: "340px", margin: "0 auto" }}>
                 <button
+                  type="button"
                   className="btn btn-ghost"
-                  type="button"
-                  disabled={claimBusy}
-                  onClick={handleUnclaim}
+                  style={{ flex: 1 }}
+                  onClick={() => setActionCardStep("normal")}
                 >
-                  {claimBusy ? "Cancelling…" : "Cancel claim"}
+                  Cancel
                 </button>
-              )}
-              {post.authorId && post.authorId !== user.id && (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  style={{ flex: 1 }}
+                  disabled={claimBusy}
+                  onClick={handleConfirmAction}
+                >
+                  {claimBusy
+                    ? "Submitting…"
+                    : post.type === "lost"
+                    ? "Yes, I Found It"
+                    : "Yes, This Is My Item"}
+                </button>
+              </div>
+            </div>
+          ) : actionCardStep === "submitted" ? (
+            /* ── CASE 3b: OTHER USER - SUBMITTED STEP ── */
+            <div className="action-card-submitted" style={{ textAlign: "center", padding: "0.75rem 0" }}>
+              <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>✓</div>
+              <h3 style={{ fontSize: "1.25rem", fontWeight: "700", marginBottom: "0.5rem", color: "var(--text-primary, #0f172a)" }}>
+                {post.type === "lost" ? "Thanks for reporting this!" : "Claim submitted!"}
+              </h3>
+              <p style={{ color: "var(--text-secondary, #64748b)", fontSize: "0.9375rem", marginBottom: "1.25rem", lineHeight: "1.5", maxWidth: "420px", margin: "0 auto 1.25rem auto" }}>
+                {post.type === "lost"
+                  ? "The poster has been notified that you found their item."
+                  : "The finder has been notified that this item belongs to you."}
+              </p>
+              <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", maxWidth: "340px", margin: "0 auto" }}>
                 <button
                   className="btn btn-primary"
                   type="button"
-                  onClick={() => {
-                    if (!user.isAuthenticated) {
-                      setShowAuthModal(true);
-                    } else {
-                      setShowChat(true);
-                    }
-                  }}
+                  onClick={() => setShowChat(true)}
                 >
-                  💬 Chat with Poster
+                  {post.type === "lost" ? "Chat with Poster" : "Chat with Finder"}
                 </button>
-              )}
-              <button
-                className="btn btn-ghost"
-                type="button"
-                onClick={handleCopyContact}
-              >
-                Copy contact
-              </button>
-              <button
-                className="btn btn-ghost"
-                type="button"
-                onClick={handleCopyLink}
-              >
-                Share link
-              </button>
+              </div>
             </div>
-          </div>
-          {post.contactName && (
-            <p>
-              <strong>Contact:</strong> {post.contactName}
-            </p>
+          ) : (
+            /* ── CASE 3c: OTHER USER - NORMAL STEP ── */
+            <>
+              <div className="contact-box-header">
+                <div>
+                  <h3>
+                    {post.type === "lost"
+                      ? "Someone may have found it"
+                      : "Owner verification & contact"}
+                  </h3>
+                  <p className="contact-helper">
+                    {post.type === "lost"
+                      ? "Reach out if you spotted this item or have it with you."
+                      : "Contact the finder below to verify ownership and arrange return."}
+                  </p>
+                </div>
+                <div className="detail-actions compact">
+                  {post.status === "open" && (
+                    <button
+                      className="btn btn-claim"
+                      type="button"
+                      disabled={claimBusy}
+                      onClick={handleActionClick}
+                    >
+                      {claimBusy
+                        ? "Processing…"
+                        : post.type === "lost"
+                        ? "I Found This"
+                        : "This Is My Item"}
+                    </button>
+                  )}
+                  {isClaimer && isClaimed && (
+                    <button
+                      className="btn btn-ghost"
+                      type="button"
+                      disabled={claimBusy}
+                      onClick={handleUnclaim}
+                    >
+                      {claimBusy
+                        ? "Cancelling…"
+                        : post.type === "lost"
+                        ? "Cancel report"
+                        : "Cancel claim"}
+                    </button>
+                  )}
+                  <button
+                    className="btn btn-primary"
+                    type="button"
+                    onClick={() => {
+                      if (!user.isAuthenticated) {
+                        setShowAuthModal(true);
+                      } else {
+                        setShowChat(true);
+                      }
+                    }}
+                  >
+                    {post.type === "lost" ? "Chat with Poster" : "Chat with Finder"}
+                  </button>
+                  <button
+                    className="btn btn-ghost"
+                    type="button"
+                    onClick={handleCopyContact}
+                  >
+                    Copy contact
+                  </button>
+                  <button
+                    className="btn btn-ghost"
+                    type="button"
+                    onClick={handleCopyLink}
+                  >
+                    Share link
+                  </button>
+                </div>
+              </div>
+              {post.contactName && (
+                <p>
+                  <strong>Contact:</strong> {post.contactName}
+                </p>
+              )}
+              {post.contactMethod && (
+                <p>
+                  <strong>Details:</strong> {post.contactMethod}
+                </p>
+              )}
+              {!post.contactName && !post.contactMethod && (
+                <p>No contact info listed. Check back soon.</p>
+              )}
+              {copyMessage && <p className="copy-feedback">{copyMessage}</p>}
+            </>
           )}
-          {post.contactMethod && (
-            <p>
-              <strong>Details:</strong> {post.contactMethod}
-            </p>
-          )}
-          {!post.contactName && !post.contactMethod && (
-            <p>No contact info listed. Check back soon.</p>
-          )}
-          {copyMessage && <p className="copy-feedback">{copyMessage}</p>}
         </div>
-
-        {/* ── Admin / Author actions ── */}
-        {user.isAuthenticated && post.authorId === user.id && (
-          <div className="detail-actions">
-            <button
-              className={`btn ${
-                post.status === "open" || post.status === "claimed" ? "btn-primary" : "btn-ghost"
-              }`}
-              type="button"
-              onClick={handleResolve}
-            >
-              {post.status === "claimed"
-                ? "✓ Confirm & Mark as Resolved"
-                : post.status === "open"
-                ? "Mark as resolved"
-                : "Reopen post"}
-            </button>
-            <button className="btn btn-danger" type="button" onClick={handleDelete}>
-              Delete post
-            </button>
-          </div>
-        )}
 
         {/* ── Comments section ── */}
         <section className="detail-comments">
@@ -394,14 +549,14 @@ export default function PostDetailPage() {
       {showAuthModal && (
         <AuthModal
           onClose={() => setShowAuthModal(false)}
-          message="Please sign in with Google to like posts."
+          message="Please sign in with Google to perform this action."
         />
       )}
 
       {showChat && post && (
         <ChatModal
           partnerId={post.authorId}
-          partnerName={post.authorName || post.contactName || "Campus Member"}
+          partnerName={post.authorName || post.contactName || (post.type === "lost" ? "Poster" : "Finder")}
           partnerAvatar={post.authorAvatar || ""}
           postId={post.id}
           onClose={() => setShowChat(false)}
