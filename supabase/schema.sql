@@ -1,9 +1,3 @@
--- ============================================================
--- UniFind – Campus Lost & Found
--- Run this entire file in Supabase Dashboard → SQL Editor
--- ============================================================
-
--- ── 1. POSTS ────────────────────────────────────────────────
 create table if not exists posts (
   id              uuid primary key default gen_random_uuid(),
   type            text not null check (type in ('lost', 'found')),
@@ -19,15 +13,17 @@ create table if not exists posts (
   author_id       uuid,
   author_name     text not null default '',
   author_avatar   text not null default '',
+  claimer_id      text default '',
+  claimer_name    text default '',
   created_at      timestamptz not null default now()
 );
 
--- Ensure columns exist if table was already created earlier
 alter table posts add column if not exists author_id uuid;
 alter table posts add column if not exists author_name text default '';
 alter table posts add column if not exists author_avatar text default '';
+alter table posts add column if not exists claimer_id text default '';
+alter table posts add column if not exists claimer_name text default '';
 
--- ── 2. LIKES ────────────────────────────────────────────────
 create table if not exists likes (
   id          uuid primary key default gen_random_uuid(),
   post_id     uuid not null references posts(id) on delete cascade,
@@ -36,7 +32,6 @@ create table if not exists likes (
   unique (post_id, user_id)
 );
 
--- ── 3. COMMENTS ─────────────────────────────────────────────
 create table if not exists comments (
   id               uuid primary key default gen_random_uuid(),
   post_id          uuid not null references posts(id) on delete cascade,
@@ -50,19 +45,16 @@ create table if not exists comments (
 
 alter table comments add column if not exists author_avatar text default '';
 
--- ── 4. INDEXES ──────────────────────────────────────────────
 create index if not exists idx_posts_type        on posts(type);
 create index if not exists idx_posts_status      on posts(status);
 create index if not exists idx_posts_created_at  on posts(created_at desc);
 create index if not exists idx_likes_post_id     on likes(post_id);
 create index if not exists idx_comments_post_id  on comments(post_id);
 
--- ── 5. ROW LEVEL SECURITY ───────────────────────────────────
 alter table posts    enable row level security;
 alter table likes    enable row level security;
 alter table comments enable row level security;
 
--- Posts
 drop policy if exists "Public read posts" on posts;
 drop policy if exists "Public insert posts" on posts;
 drop policy if exists "Public update posts" on posts;
@@ -73,10 +65,9 @@ drop policy if exists "Owner delete posts" on posts;
 
 create policy "Public read posts"           on posts for select using (true);
 create policy "Authenticated insert posts" on posts for insert with check (auth.role() = 'authenticated');
-create policy "Owner update posts"         on posts for update using (auth.uid() = author_id);
+create policy "Public update posts"         on posts for update using (true);
 create policy "Owner delete posts"         on posts for delete using (auth.uid() = author_id);
 
--- Likes
 drop policy if exists "Public read likes" on likes;
 drop policy if exists "Public insert likes" on likes;
 drop policy if exists "Public delete likes" on likes;
@@ -87,7 +78,6 @@ create policy "Public read likes"           on likes for select using (true);
 create policy "Authenticated insert likes" on likes for insert with check (auth.role() = 'authenticated');
 create policy "Owner delete likes"         on likes for delete using (auth.uid()::text = user_id);
 
--- Comments
 drop policy if exists "Public read comments" on comments;
 drop policy if exists "Public insert comments" on comments;
 drop policy if exists "Public delete comments" on comments;
@@ -98,7 +88,6 @@ create policy "Public read comments"           on comments for select using (tru
 create policy "Authenticated insert comments" on comments for insert with check (auth.role() = 'authenticated');
 create policy "Owner delete comments"         on comments for delete using (auth.uid()::text = user_id);
 
--- ── 6. MESSAGES (1-on-1 Chat) ────────────────────────────────
 create table if not exists messages (
   id             uuid primary key default gen_random_uuid(),
   post_id        uuid references posts(id) on delete cascade,
@@ -120,7 +109,6 @@ alter table messages add column if not exists text text default '';
 alter table messages add column if not exists conversation_id text;
 alter table messages alter column conversation_id drop not null;
 
--- ── 7. NOTIFICATIONS ─────────────────────────────────────────
 create table if not exists notifications (
   id             uuid primary key default gen_random_uuid(),
   user_id        text not null,
@@ -145,22 +133,33 @@ alter table notifications add column if not exists post_title text default '';
 alter table notifications add column if not exists content text default '';
 alter table notifications add column if not exists read boolean default false;
 
--- ── 8. INDEXES ───────────────────────────────────────────────
+create table if not exists claims (
+  id           uuid primary key default gen_random_uuid(),
+  post_id      uuid not null references posts(id) on delete cascade,
+  user_id      text not null,
+  user_name    text not null default 'Campus Member',
+  user_avatar  text not null default '',
+  claim_type   text not null default 'claim',
+  status       text not null default 'pending',
+  created_at   timestamptz not null default now(),
+  unique (post_id, user_id)
+);
+
 create index if not exists idx_messages_participants on messages(sender_id, receiver_id);
 create index if not exists idx_messages_post_id      on messages(post_id);
 create index if not exists idx_notifications_user_id on notifications(user_id, read);
+create index if not exists idx_claims_user_id        on claims(user_id);
+create index if not exists idx_claims_post_id        on claims(post_id);
 
--- ── 9. RLS FOR MESSAGES & NOTIFICATIONS ──────────────────────
 alter table messages      enable row level security;
 alter table notifications enable row level security;
+alter table claims        enable row level security;
 
--- Messages Policies
 drop policy if exists "Public read messages" on messages;
 drop policy if exists "Authenticated insert messages" on messages;
 create policy "Public read messages" on messages for select using (true);
 create policy "Authenticated insert messages" on messages for insert with check (auth.role() = 'authenticated');
 
--- Notifications Policies
 drop policy if exists "Public read notifications" on notifications;
 drop policy if exists "Public insert notifications" on notifications;
 drop policy if exists "Public update notifications" on notifications;
@@ -168,7 +167,13 @@ create policy "Public read notifications" on notifications for select using (tru
 create policy "Public insert notifications" on notifications for insert with check (true);
 create policy "Public update notifications" on notifications for update using (true);
 
--- ── 10. HELPER VIEW: posts with like/comment counts ──────────
+drop policy if exists "Public read claims" on claims;
+drop policy if exists "Public insert claims" on claims;
+drop policy if exists "Public delete claims" on claims;
+create policy "Public read claims"   on claims for select using (true);
+create policy "Public insert claims" on claims for insert with check (true);
+create policy "Public delete claims" on claims for delete using (true);
+
 create or replace view posts_with_counts as
   select
     p.*,
