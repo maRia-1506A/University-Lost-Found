@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { fetchUserConversations } from "../api.js";
-
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -11,7 +10,6 @@ function timeAgo(dateStr) {
   const days = Math.floor(hrs / 24);
   return days < 7 ? `${days}d ago` : new Date(dateStr).toLocaleDateString();
 }
-
 export default function ConversationsDropdown({
   userId,
   onClose,
@@ -19,7 +17,6 @@ export default function ConversationsDropdown({
 }) {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     let active = true;
     fetchUserConversations(userId)
@@ -32,12 +29,10 @@ export default function ConversationsDropdown({
       .catch(() => {
         if (active) setLoading(false);
       });
-
     return () => {
       active = false;
     };
   }, [userId]);
-
   function handleSelect(conv) {
     onClose();
     if (onOpenChat) {
@@ -49,9 +44,7 @@ export default function ConversationsDropdown({
       });
     }
   }
-
   const unreadCount = conversations.filter((c) => c.unread).length;
-
   return (
     <div className="notification-dropdown messenger-chats-dropdown" onClick={(e) => e.stopPropagation()}>
       <div className="notification-dropdown-header">
@@ -62,7 +55,6 @@ export default function ConversationsDropdown({
           )}
         </div>
       </div>
-
       <div className="notification-dropdown-body">
         {loading ? (
           <div className="notification-empty">
@@ -99,7 +91,6 @@ export default function ConversationsDropdown({
                   )}
                   <span className="messenger-item-online-dot" />
                 </div>
-
                 <div className="notification-content">
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <strong style={{ fontSize: "14px", color: "var(--text)" }}>{conv.partnerName}</strong>

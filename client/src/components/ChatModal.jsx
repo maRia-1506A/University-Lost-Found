@@ -1,9 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+﻿import React, { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { fetchDirectMessages, sendChatMessage, markMessagesRead } from "../api.js";
 import { supabase } from "../supabase.js";
 import { useAuth } from "../context/AuthContext.jsx";
-
 function formatMsgTime(dateStr) {
   const date = new Date(dateStr);
   const diff = Date.now() - date.getTime();
@@ -14,7 +13,6 @@ function formatMsgTime(dateStr) {
   if (hrs < 24) return `${hrs}h ago`;
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
-
 export default function ChatModal({
   partnerId,
   partnerName = "Campus Member",
@@ -32,16 +30,12 @@ export default function ChatModal({
   const [resolvedPartnerAvatar, setResolvedPartnerAvatar] = useState("");
   const chatBottomRef = useRef(null);
   const inputRef = useRef(null);
-
-  // Lock body scroll when modal is open
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "";
     };
   }, []);
-
-  // Close on Escape key
   useEffect(() => {
     function handleKey(e) {
       if (e.key === "Escape") onClose();
@@ -49,18 +43,13 @@ export default function ChatModal({
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
-
-  // Load full conversation history and mark incoming messages as read
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-
     fetchDirectMessages(postId, user.id, partnerId)
       .then((data) => {
         if (!cancelled) {
           setMessages(data);
-
-          // Resolve partner name & avatar from message history
           const partnerMsg = data.find(
             (m) => m.sender_id !== user.id && m.sender_name
           );
@@ -69,8 +58,6 @@ export default function ChatModal({
             if (partnerMsg.sender_avatar) setResolvedPartnerAvatar(partnerMsg.sender_avatar);
           }
           setLoading(false);
-
-          // Mark all messages from partner as read, then refresh badge count
           const hasUnread = data.some(
             (m) => m.sender_id === partnerId && m.receiver_id === user.id && !m.read
           );
@@ -84,13 +71,10 @@ export default function ChatModal({
       .catch(() => {
         if (!cancelled) setLoading(false);
       });
-
     return () => {
       cancelled = true;
     };
   }, [postId, user.id, partnerId, onRead]);
-
-  // Real-time message listener
   useEffect(() => {
     const channel = supabase
       .channel(`chat_${user.id}_${partnerId}`)
@@ -111,11 +95,9 @@ export default function ChatModal({
               if (prev.some((m) => m.id === newMsg.id)) return prev;
               return [...prev, newMsg];
             });
-
             if (newMsg.sender_id !== user.id && newMsg.sender_name) {
               setResolvedPartnerName(newMsg.sender_name);
               if (newMsg.sender_avatar) setResolvedPartnerAvatar(newMsg.sender_avatar);
-              // Auto-mark as read since the chat is open
               markMessagesRead(user.id, partnerId).then(() => {
                 if (onRead) onRead();
               });
@@ -124,35 +106,26 @@ export default function ChatModal({
         }
       )
       .subscribe();
-
     return () => {
       supabase.removeChannel(channel);
     };
   }, [user.id, partnerId]);
-
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
-
-  // Focus input after load
   useEffect(() => {
     if (!loading) {
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [loading]);
-
   const displayPartnerName =
     resolvedPartnerName ||
     (partnerName && partnerName !== user.name ? partnerName : "Campus Member");
-
   const displayPartnerAvatar = resolvedPartnerAvatar || partnerAvatar || "";
-
   async function handleSend(e) {
     e.preventDefault();
     const trimmed = text.trim();
     if (!trimmed || sending) return;
-
     setSending(true);
     try {
       const sent = await sendChatMessage({
@@ -161,7 +134,6 @@ export default function ChatModal({
         text: trimmed,
         user,
       });
-
       setMessages((prev) => {
         if (prev.some((m) => m.id === sent.id)) return prev;
         return [...prev, sent];
@@ -173,7 +145,6 @@ export default function ChatModal({
       setSending(false);
     }
   }
-
   const modalContent = (
     <div
       className="chat-modal-overlay"
@@ -186,7 +157,6 @@ export default function ChatModal({
         className="chat-modal-window"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ── Header ── */}
         <div className="chat-modal-header">
           <div className="chat-modal-user-info">
             <div className="chat-modal-avatar-wrap">
@@ -221,8 +191,6 @@ export default function ChatModal({
             ✕
           </button>
         </div>
-
-        {/* ── Messages Body ── */}
         <div className="chat-modal-body">
           {loading ? (
             <div className="chat-modal-loading">
@@ -244,7 +212,6 @@ export default function ChatModal({
               const avatarSrc = isMine
                 ? user.avatar
                 : msg.sender_avatar || displayPartnerAvatar;
-
               return (
                 <div
                   key={msg.id}
@@ -274,8 +241,6 @@ export default function ChatModal({
           )}
           <div ref={chatBottomRef} />
         </div>
-
-        {/* ── Composer Footer ── */}
         <form className="chat-modal-footer" onSubmit={handleSend}>
           <input
             ref={inputRef}
@@ -310,7 +275,5 @@ export default function ChatModal({
       </div>
     </div>
   );
-
-  // Render via portal directly onto document.body — escapes any stacking context
   return ReactDOM.createPortal(modalContent, document.body);
 }

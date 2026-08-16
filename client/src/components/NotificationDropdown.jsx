@@ -1,7 +1,6 @@
-import React from "react";
+﻿import React from "react";
 import { Link } from "react-router-dom";
 import { markNotificationRead, markAllNotificationsRead } from "../api.js";
-
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -12,7 +11,6 @@ function timeAgo(dateStr) {
   const days = Math.floor(hrs / 24);
   return days < 7 ? `${days}d ago` : new Date(dateStr).toLocaleDateString();
 }
-
 export default function NotificationDropdown({
   notifications = [],
   userId,
@@ -35,14 +33,11 @@ export default function NotificationDropdown({
       });
     }
   }
-
   async function handleMarkAllRead() {
     await markAllNotificationsRead(userId);
     if (onRefresh) onRefresh();
   }
-
   const unreadCount = notifications.filter((n) => !n.read).length;
-
   return (
     <div
       className="notification-dropdown"
@@ -65,7 +60,6 @@ export default function NotificationDropdown({
           </button>
         )}
       </div>
-
       <div className="notification-dropdown-body">
         {notifications.length === 0 ? (
           <div className="notification-empty">
@@ -103,7 +97,6 @@ export default function NotificationDropdown({
                       : "✉️"}
                   </span>
                 </div>
-
                 <div className="notification-content">
                   <p className="notification-text">
                     <strong>{item.actor_name}</strong>{" "}
@@ -122,7 +115,6 @@ export default function NotificationDropdown({
                     {timeAgo(item.created_at)}
                   </span>
                 </div>
-
                 {item.type === "message" ? (
                   <button
                     type="button"

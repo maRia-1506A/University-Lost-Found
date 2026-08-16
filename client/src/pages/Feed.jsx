@@ -1,11 +1,10 @@
-import React, { useCallback, useEffect, useState } from "react";
+﻿import React, { useCallback, useEffect, useState } from "react";
 import FilterBar from "../components/FilterBar.jsx";
 import PostCard from "../components/PostCard.jsx";
 import PostForm from "../components/PostForm.jsx";
 import AuthModal from "../components/AuthModal.jsx";
 import { fetchPosts, createPost, fetchStats } from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
-
 export default function Feed({ composerSignal = 0 }) {
   const { user, signInWithGoogle } = useAuth();
   const [posts, setPosts] = useState([]);
@@ -15,23 +14,19 @@ export default function Feed({ composerSignal = 0 }) {
   const [showForm, setShowForm] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
   const [stats, setStats] = useState({
     totalLost: 0,
     totalFound: 0,
     openCases: 0,
     resolvedCases: 0,
   });
-
   const loadStats = useCallback(async () => {
     try {
       const s = await fetchStats();
       setStats(s);
     } catch {
-      // Non-critical — silently ignore
     }
   }, []);
-
   const loadPosts = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -44,12 +39,10 @@ export default function Feed({ composerSignal = 0 }) {
       setLoading(false);
     }
   }, [filters]);
-
   useEffect(() => {
     loadStats();
     loadPosts();
   }, [loadStats, loadPosts]);
-
   function handleOpenForm() {
     if (!user.isAuthenticated) {
       setShowAuthModal(true);
@@ -57,7 +50,6 @@ export default function Feed({ composerSignal = 0 }) {
     }
     setShowForm(true);
   }
-
   useEffect(() => {
     if (composerSignal > 0) {
       if (!user.isAuthenticated) {
@@ -67,11 +59,9 @@ export default function Feed({ composerSignal = 0 }) {
       }
     }
   }, [composerSignal, user.isAuthenticated]);
-
   function handleFilterChange(change) {
     setFilters((prev) => ({ ...prev, ...change }));
   }
-
   async function handleCreatePost(data) {
     if (!user.isAuthenticated) {
       signInWithGoogle().catch((err) => alert(err.message));
@@ -90,10 +80,8 @@ export default function Feed({ composerSignal = 0 }) {
       setSubmitting(false);
     }
   }
-
   return (
     <div className="feed">
-      {/* ── Dashboard Page Header ── */}
       <header className="page-header">
         <div className="page-header-title">
           <span className="eyebrow">✦ Campus Overview</span>
@@ -108,8 +96,6 @@ export default function Feed({ composerSignal = 0 }) {
           </button>
         </div>
       </header>
-
-      {/* ── KPI Metric Cards ── */}
       <section className="kpi-stats-grid">
         <div className="kpi-card kpi-card--lost">
           <div className="kpi-icon">🔴</div>
@@ -118,7 +104,6 @@ export default function Feed({ composerSignal = 0 }) {
             <span className="kpi-label">Lost Items</span>
           </div>
         </div>
-
         <div className="kpi-card kpi-card--found">
           <div className="kpi-icon">🩵</div>
           <div className="kpi-data">
@@ -126,7 +111,6 @@ export default function Feed({ composerSignal = 0 }) {
             <span className="kpi-label">Found Items</span>
           </div>
         </div>
-
         <div className="kpi-card kpi-card--open">
           <div className="kpi-icon">📋</div>
           <div className="kpi-data">
@@ -134,7 +118,6 @@ export default function Feed({ composerSignal = 0 }) {
             <span className="kpi-label">Open Cases</span>
           </div>
         </div>
-
         <div className="kpi-card kpi-card--resolved">
           <div className="kpi-icon">✅</div>
           <div className="kpi-data">
@@ -143,7 +126,6 @@ export default function Feed({ composerSignal = 0 }) {
           </div>
         </div>
       </section>
-
       <div className="dashboard-layout">
         <section className="feed-column">
           <FilterBar
@@ -152,10 +134,8 @@ export default function Feed({ composerSignal = 0 }) {
             q={filters.q}
             onChange={handleFilterChange}
           />
-
           {error && <p className="error-banner">{error}</p>}
           {loading && <p className="status-text">Loading posts...</p>}
-
           {!loading && !error && posts.length === 0 && (
             <div className="empty-state">
               <p className="empty-icon">&#128269;</p>
@@ -163,7 +143,6 @@ export default function Feed({ composerSignal = 0 }) {
               <p>Try a different search, or be the first to post about an item.</p>
             </div>
           )}
-
           <div className="post-list">
             {posts.map((post) => (
               <PostCard key={post.id} post={post} />
@@ -171,7 +150,6 @@ export default function Feed({ composerSignal = 0 }) {
           </div>
         </section>
       </div>
-
       {showForm && (
         <PostForm
           onClose={() => setShowForm(false)}
@@ -179,7 +157,6 @@ export default function Feed({ composerSignal = 0 }) {
           submitting={submitting}
         />
       )}
-
       {showAuthModal && (
         <AuthModal
           onClose={() => setShowAuthModal(false)}

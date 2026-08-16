@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   fetchUserPosts,
@@ -8,7 +8,6 @@ import {
 } from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import PostCard from "../components/PostCard.jsx";
-
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -19,26 +18,21 @@ function timeAgo(dateStr) {
   const days = Math.floor(hrs / 24);
   return days < 7 ? `${days}d ago` : new Date(dateStr).toLocaleDateString();
 }
-
 export default function ProfilePage() {
   const { userId } = useParams();
   const { user: currentUser } = useAuth();
-
   const isSelf = !userId || userId === "me" || userId === currentUser.id;
   const targetUserId = isSelf ? currentUser.id : userId;
-
-  const [activeTab, setActiveTab] = useState("posts"); // 'posts' | 'claims' | 'comments' | 'likes'
+  const [activeTab, setActiveTab] = useState("posts");
   const [userPosts, setUserPosts] = useState([]);
   const [userClaims, setUserClaims] = useState([]);
   const [userComments, setUserComments] = useState([]);
   const [userLikedPosts, setUserLikedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [profileUser, setProfileUser] = useState(null);
-
   useEffect(() => {
     let isCancelled = false;
     setLoading(true);
-
     async function loadProfileData() {
       try {
         const [posts, claims, comments, likedPosts] = await Promise.all([
@@ -47,14 +41,11 @@ export default function ProfilePage() {
           fetchUserComments(targetUserId),
           fetchUserLikedPosts(targetUserId),
         ]);
-
         if (isCancelled) return;
-
         setUserPosts(posts);
         setUserClaims(claims);
         setUserComments(comments);
         setUserLikedPosts(likedPosts);
-
         if (isSelf) {
           setProfileUser(currentUser);
         } else {
@@ -81,25 +72,19 @@ export default function ProfilePage() {
         if (!isCancelled) setLoading(false);
       }
     }
-
     loadProfileData();
-
     return () => {
       isCancelled = true;
     };
   }, [targetUserId, isSelf, currentUser]);
-
   const displayUser =
     profileUser ||
     (isSelf ? currentUser : { name: "Campus User", initials: "CU" });
-
   return (
     <div className="profile-page">
       <Link to="/" className="back-link">
         ← Back to feed
       </Link>
-
-      {/* ── User Profile Header Card ── */}
       <header className="profile-header-card">
         <div className="profile-header-accent">
           <div className="profile-cover-pattern" />
@@ -120,7 +105,6 @@ export default function ProfilePage() {
             )}
             <span className="profile-status-online" title="Active Campus User" />
           </div>
-
           <div className="profile-user-details">
             <div className="profile-name-row">
               <h2>{displayUser.name}</h2>
@@ -148,7 +132,6 @@ export default function ProfilePage() {
                 </span>
               )}
             </div>
-
             <div className="profile-meta-pills">
               {isSelf && currentUser.email && (
                 <span className="meta-pill">
@@ -161,8 +144,6 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-
-        {/* ── Profile Quick Stats ── */}
         <div className="profile-stats-grid">
           <div
             className={`profile-stat-box ${
@@ -176,7 +157,6 @@ export default function ProfilePage() {
               <span className="profile-stat-label">Posts Created</span>
             </div>
           </div>
-
           <div
             className={`profile-stat-box ${
               activeTab === "claims" ? "active" : ""
@@ -189,7 +169,6 @@ export default function ProfilePage() {
               <span className="profile-stat-label">Claims & Reports</span>
             </div>
           </div>
-
           <div
             className={`profile-stat-box ${
               activeTab === "comments" ? "active" : ""
@@ -204,7 +183,6 @@ export default function ProfilePage() {
               <span className="profile-stat-label">Comments</span>
             </div>
           </div>
-
           <div
             className={`profile-stat-box ${
               activeTab === "likes" ? "active" : ""
@@ -221,14 +199,11 @@ export default function ProfilePage() {
           </div>
         </div>
       </header>
-
-      {/* ── Tab Content ── */}
       <div className="profile-tab-content">
         {loading ? (
           <p className="status-text">Loading activity...</p>
         ) : (
           <>
-            {/* ── 1. Posts Tab ── */}
             {activeTab === "posts" && (
               <div className="post-list">
                 {userPosts.length === 0 ? (
@@ -248,8 +223,6 @@ export default function ProfilePage() {
                 )}
               </div>
             )}
-
-            {/* ── 2. Claims Tab ── */}
             {activeTab === "claims" && (
               <div className="post-list">
                 {userClaims.length === 0 ? (
@@ -269,8 +242,6 @@ export default function ProfilePage() {
                 )}
               </div>
             )}
-
-            {/* ── 3. Comments Tab ── */}
             {activeTab === "comments" && (
               <div className="profile-comments-list">
                 {userComments.length === 0 ? (
@@ -303,8 +274,6 @@ export default function ProfilePage() {
                 )}
               </div>
             )}
-
-            {/* ── 4. Liked Items Tab ── */}
             {activeTab === "likes" && (
               <div className="post-list">
                 {userLikedPosts.length === 0 ? (

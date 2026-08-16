@@ -1,9 +1,7 @@
-import React from "react";
+﻿import React from "react";
 import { useAuth } from "../context/AuthContext.jsx";
-
 export default function AuthModal({ onClose, message = "Please sign in with Google to share a lost or found post with the campus community." }) {
   const { signInWithGoogle } = useAuth();
-
   async function handleSignIn() {
     try {
       await signInWithGoogle();
@@ -12,7 +10,6 @@ export default function AuthModal({ onClose, message = "Please sign in with Goog
       alert(err.message || "Failed to sign in");
     }
   }
-
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div
@@ -39,7 +36,6 @@ export default function AuthModal({ onClose, message = "Please sign in with Goog
         >
           {message}
         </p>
-
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           <button
             type="button"
@@ -67,7 +63,6 @@ export default function AuthModal({ onClose, message = "Please sign in with Goog
             </svg>
             <span>Sign in with Google</span>
           </button>
-
           <button
             type="button"
             className="btn btn-ghost"

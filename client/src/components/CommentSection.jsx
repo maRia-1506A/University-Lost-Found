@@ -1,8 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+﻿import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { addComment, fetchComments } from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
-
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -14,16 +13,13 @@ function timeAgo(dateStr) {
   if (days < 7) return `${days}d ago`;
   return new Date(dateStr).toLocaleDateString();
 }
-
 export default function CommentSection({ postId, onCountChange }) {
   const { user, signInWithGoogle } = useAuth();
-
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef(null);
-
   useEffect(() => {
     let cancelled = false;
     fetchComments(postId)
@@ -38,13 +34,11 @@ export default function CommentSection({ postId, onCountChange }) {
       cancelled = true;
     };
   }, [postId, onCountChange]);
-
   useEffect(() => {
     if (user.isAuthenticated) {
       inputRef.current?.focus();
     }
   }, [user.isAuthenticated]);
-
   async function handleSubmit(e) {
     e.preventDefault();
     if (!user.isAuthenticated) {
@@ -73,10 +67,8 @@ export default function CommentSection({ postId, onCountChange }) {
       setSubmitting(false);
     }
   }
-
   return (
     <div className="comment-section">
-      {/* ── Comment list ── */}
       {comments.length === 0 ? (
         <p className="comment-empty">No comments yet — be the first!</p>
       ) : (
@@ -113,8 +105,6 @@ export default function CommentSection({ postId, onCountChange }) {
           ))}
         </ul>
       )}
-
-      {/* ── New comment form ── */}
       {user.isAuthenticated ? (
         <form className="comment-form" onSubmit={handleSubmit}>
           <div className="comment-input-row">

@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
-
 const CATEGORIES = [
   "Electronics",
   "Wallet / ID",
@@ -10,7 +9,6 @@ const CATEGORIES = [
   "Backpack / Bag",
   "Other",
 ];
-
 export default function PostForm({ onClose, onSubmit, submitting }) {
   const { user } = useAuth();
   const [type, setType] = useState("lost");
@@ -24,7 +22,6 @@ export default function PostForm({ onClose, onSubmit, submitting }) {
   const [image, setImage] = useState("");
   const [imagePreview, setImagePreview] = useState("");
   const [error, setError] = useState("");
-
   function handleFile(e) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
@@ -39,13 +36,11 @@ export default function PostForm({ onClose, onSubmit, submitting }) {
     };
     reader.readAsDataURL(file);
   }
-
   function handleSubmit(e) {
     e.preventDefault();
     setError("");
     if (!title.trim()) return setError("Please enter a title");
     if (!description.trim()) return setError("Please enter a description");
-
     onSubmit({
       type,
       title,
@@ -58,7 +53,6 @@ export default function PostForm({ onClose, onSubmit, submitting }) {
       image,
     });
   }
-
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -71,7 +65,6 @@ export default function PostForm({ onClose, onSubmit, submitting }) {
             &times;
           </button>
         </div>
-
         <form onSubmit={handleSubmit} className="post-form">
           <div className="form-row type-toggle">
             <button
@@ -89,7 +82,6 @@ export default function PostForm({ onClose, onSubmit, submitting }) {
               I Found Something
             </button>
           </div>
-
           <label className="form-field">
             <span>Title</span>
             <input
@@ -102,7 +94,6 @@ export default function PostForm({ onClose, onSubmit, submitting }) {
               maxLength="120"
             />
           </label>
-
           <div className="form-row two-col">
             <label className="form-field">
               <span>Category</span>
@@ -124,7 +115,6 @@ export default function PostForm({ onClose, onSubmit, submitting }) {
               />
             </label>
           </div>
-
           <label className="form-field">
             <span>Description</span>
             <textarea
@@ -134,7 +124,6 @@ export default function PostForm({ onClose, onSubmit, submitting }) {
               placeholder="Describe the item: brand, color, distinguishing marks, where it was..."
             />
           </label>
-
           <label className="form-field">
             <span>Location</span>
             <input
@@ -144,7 +133,6 @@ export default function PostForm({ onClose, onSubmit, submitting }) {
               placeholder="e.g. Library, 2nd floor"
             />
           </label>
-
           <div className="form-row two-col">
             <label className="form-field">
               <span>Your name</span>
@@ -165,7 +153,6 @@ export default function PostForm({ onClose, onSubmit, submitting }) {
               />
             </label>
           </div>
-
           <label className="form-field">
             <span>Photo (optional)</span>
             <input type="file" accept="image/*" onChange={handleFile} />
@@ -173,11 +160,8 @@ export default function PostForm({ onClose, onSubmit, submitting }) {
               <img src={imagePreview} alt="preview" className="image-preview" />
             )}
           </label>
-
           {error && <p className="form-error">{error}</p>}
-
           <p className="form-hint">Posts stay visible to everyone on campus until you mark them resolved.</p>
-
           <div className="form-actions">
             <button type="button" className="btn btn-ghost" onClick={onClose}>
               Cancel

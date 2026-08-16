@@ -1,4 +1,4 @@
-export const INITIAL_DEMO_POSTS = [
+﻿export const INITIAL_DEMO_POSTS = [
   {
     "id": "seed001",
     "type": "lost",
@@ -9,7 +9,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-07-28",
     "contactName": "Alex Rivers",
     "contactMethod": "alex.rivers@university.edu | (555) 234-5678",
-    "image": "https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "open",
     "likes": 14,
     "likedBy": [],
@@ -41,7 +41,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-07-29",
     "contactName": "Campus Security Office",
     "contactMethod": "security@university.edu | Ext. 4400",
-    "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "open",
     "likes": 21,
     "likedBy": [],
@@ -73,7 +73,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-07-27",
     "contactName": "Jordan Chen",
     "contactMethod": "jordan.chen@university.edu",
-    "image": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "open",
     "likes": 9,
     "likedBy": [],
@@ -98,7 +98,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-07-30",
     "contactName": "Gym Front Desk",
     "contactMethod": "rec-center@university.edu",
-    "image": "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "open",
     "likes": 6,
     "likedBy": [],
@@ -123,7 +123,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-07-31",
     "contactName": "Marcus Aurelius",
     "contactMethod": "marcus.a@university.edu | (555) 890-1234",
-    "image": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "open",
     "likes": 35,
     "likedBy": [],
@@ -162,7 +162,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-07-31",
     "contactName": "Arts Dept Reception",
     "contactMethod": "arts-reception@university.edu",
-    "image": "https://images.unsplash.com/photo-1582139329536-e7284fece509?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "resolved",
     "likes": 18,
     "likedBy": [],
@@ -187,7 +187,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-08-01",
     "contactName": "Omar Farooq",
     "contactMethod": "omar.f@university.edu | (555) 777-9911",
-    "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "open",
     "likes": 28,
     "likedBy": [],
@@ -219,7 +219,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-08-01",
     "contactName": "Student Services Desk",
     "contactMethod": "studentservices@university.edu",
-    "image": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "open",
     "likes": 16,
     "likedBy": [],
@@ -244,7 +244,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-07-30",
     "contactName": "Felix Wright",
     "contactMethod": "felix.w@university.edu",
-    "image": "https://images.unsplash.com/photo-1591076482161-42ce6da69f67?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "open",
     "likes": 11,
     "likedBy": [],
@@ -269,7 +269,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-07-31",
     "contactName": "Campus Cafe Staff",
     "contactMethod": "cafe@university.edu",
-    "image": "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "open",
     "likes": 22,
     "likedBy": [],
@@ -294,7 +294,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-08-01",
     "contactName": "Nadia Shah",
     "contactMethod": "nadia.s@university.edu",
-    "image": "https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "open",
     "likes": 25,
     "likedBy": [],
@@ -326,7 +326,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-08-01",
     "contactName": "Medical Security Post",
     "contactMethod": "med-security@university.edu",
-    "image": "https://images.unsplash.com/photo-1517479149777-5f3b6511d5ad?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "open",
     "likes": 5,
     "likedBy": [],
@@ -351,7 +351,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-07-29",
     "contactName": "Isabelle Cruz",
     "contactMethod": "isabelle.c@university.edu",
-    "image": "https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "open",
     "likes": 17,
     "likedBy": [],
@@ -376,7 +376,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-07-29",
     "contactName": "Athletics Dept Desk",
     "contactMethod": "athletics@university.edu",
-    "image": "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "open",
     "likes": 7,
     "likedBy": [],
@@ -393,7 +393,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-07-30",
     "contactName": "Yusuf Al-Mansoor",
     "contactMethod": "yusuf.a@university.edu",
-    "image": "https://images.unsplash.com/photo-1623949303757-0f0d6d539655?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "open",
     "likes": 42,
     "likedBy": [],
@@ -425,7 +425,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-07-30",
     "contactName": "Stadium Gate 2 Desk",
     "contactMethod": "stadium@university.edu",
-    "image": "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "resolved",
     "likes": 12,
     "likedBy": [],
@@ -450,7 +450,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-08-01",
     "contactName": "Priya Nair",
     "contactMethod": "priya.n@university.edu",
-    "image": "https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "open",
     "likes": 13,
     "likedBy": [],
@@ -475,7 +475,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-08-01",
     "contactName": "Tennis Pro Shop",
     "contactMethod": "tennis@university.edu",
-    "image": "https://images.unsplash.com/photo-1617083934555-563d23ec0822?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "open",
     "likes": 8,
     "likedBy": [],
@@ -492,7 +492,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-07-29",
     "contactName": "Ethan Ross",
     "contactMethod": "ethan.r@university.edu",
-    "image": "https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "open",
     "likes": 4,
     "likedBy": [],
@@ -517,7 +517,7 @@ export const INITIAL_DEMO_POSTS = [
     "dateLost": "2026-07-31",
     "contactName": "Campus Police Department",
     "contactMethod": "police-dispatch@university.edu | (555) 0199",
-    "image": "https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=600&q=80",
+    "image": "https:
     "status": "open",
     "likes": 30,
     "likedBy": [],

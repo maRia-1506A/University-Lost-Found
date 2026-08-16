@@ -1,5 +1,4 @@
-import React from "react";
-
+﻿import React from "react";
 const CATEGORIES = [
   "All",
   "Electronics",
@@ -10,12 +9,9 @@ const CATEGORIES = [
   "Backpack / Bag",
   "Other",
 ];
-
 const TABS = ["all", "lost", "found"];
-
 export default function FilterBar({ type, category, q, onChange }) {
   const activeIndex = TABS.indexOf(type) === -1 ? 0 : TABS.indexOf(type);
-
   return (
     <div className="filter-bar">
       <div className="filter-header">
@@ -23,7 +19,6 @@ export default function FilterBar({ type, category, q, onChange }) {
         <p>Browse all campus updates or narrow the stream by item type and category.</p>
       </div>
       <div className="filter-tabs" role="tablist">
-        {/* Sliding pill indicator */}
         <span
           className={`tab-slider tab-slider--${TABS[activeIndex]}`}
           style={{ transform: `translateX(${activeIndex * 100}%)` }}

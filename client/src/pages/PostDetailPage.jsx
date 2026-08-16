@@ -1,11 +1,10 @@
-import React, { useCallback, useEffect, useState } from "react";
+﻿import React, { useCallback, useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { fetchPost, updatePostStatus, deletePost, toggleLike, claimPost, unclaimPost } from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import CommentSection from "../components/CommentSection.jsx";
 import AuthModal from "../components/AuthModal.jsx";
 import ChatModal from "../components/ChatModal.jsx";
-
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -16,30 +15,24 @@ function timeAgo(dateStr) {
   const days = Math.floor(hrs / 24);
   return days < 7 ? `${days}d ago` : new Date(dateStr).toLocaleDateString();
 }
-
 export default function PostDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [actionCardStep, setActionCardStep] = useState("normal"); // 'normal' | 'confirm' | 'submitted'
+  const [actionCardStep, setActionCardStep] = useState("normal");
   const [showChat, setShowChat] = useState(false);
-
-  // Like state — seeded from post.liked / post.likes after load
   const [likes, setLikes] = useState(0);
   const [liked, setLiked] = useState(false);
   const [likeBusy, setLikeBusy] = useState(false);
-
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      // Pass userId so fetchPost can check if this user already liked it
       const data = await fetchPost(id, user.id);
       setPost(data);
       setLikes(data.likes ?? 0);
@@ -50,11 +43,9 @@ export default function PostDetailPage() {
       setLoading(false);
     }
   }, [id, user.id]);
-
   useEffect(() => {
     load();
   }, [load]);
-
   async function handleLike() {
     if (!user.isAuthenticated) {
       setShowAuthModal(true);
@@ -62,7 +53,6 @@ export default function PostDetailPage() {
     }
     if (likeBusy) return;
     setLikeBusy(true);
-    // Optimistic update
     const wasLiked = liked;
     setLiked(!wasLiked);
     setLikes((prev) => (wasLiked ? prev - 1 : prev + 1));
@@ -71,16 +61,13 @@ export default function PostDetailPage() {
       setLikes(result.likes);
       setLiked(result.liked);
     } catch {
-      // Rollback on error
       setLiked(wasLiked);
       setLikes((prev) => (wasLiked ? prev + 1 : prev - 1));
     } finally {
       setLikeBusy(false);
     }
   }
-
   const [claimBusy, setClaimBusy] = useState(false);
-
   function handleActionClick() {
     if (!user.isAuthenticated) {
       setShowAuthModal(true);
@@ -88,7 +75,6 @@ export default function PostDetailPage() {
     }
     setActionCardStep("confirm");
   }
-
   async function handleConfirmAction() {
     if (claimBusy) return;
     setClaimBusy(true);
@@ -102,7 +88,6 @@ export default function PostDetailPage() {
       setClaimBusy(false);
     }
   }
-
   async function handleUnclaim() {
     if (claimBusy) return;
     setClaimBusy(true);
@@ -116,7 +101,6 @@ export default function PostDetailPage() {
       setClaimBusy(false);
     }
   }
-
   async function handleResolve() {
     try {
       await updatePostStatus(id, post.status === "resolved" ? "open" : "resolved");
@@ -125,7 +109,6 @@ export default function PostDetailPage() {
       alert(err.message);
     }
   }
-
   async function handleDelete() {
     if (!window.confirm("Delete this post permanently?")) return;
     try {
@@ -135,7 +118,6 @@ export default function PostDetailPage() {
       alert(err.message);
     }
   }
-
   async function copyToClipboard(text, successMsg) {
     try {
       await navigator.clipboard.writeText(text);
@@ -145,7 +127,6 @@ export default function PostDetailPage() {
       alert("Copying is not available in this browser.");
     }
   }
-
   function handleCopyContact() {
     const contactText = [post.contactName, post.contactMethod]
       .filter(Boolean)
@@ -156,11 +137,9 @@ export default function PostDetailPage() {
     }
     copyToClipboard(contactText, "Contact details copied ✓");
   }
-
   function handleCopyLink() {
     copyToClipboard(window.location.href, "Link copied ✓");
   }
-
   if (loading) return <p className="status-text">Loading post…</p>;
   if (error) {
     return (
@@ -173,23 +152,17 @@ export default function PostDetailPage() {
       </div>
     );
   }
-
   const isOwner = !!(user.isAuthenticated && post.authorId && user.id === post.authorId);
   const isResolved = post.status === "resolved";
   const isClaimed = post.status === "claimed";
   const isClaimer = !!(user.id && post.claimerId && user.id === post.claimerId);
-
   return (
     <div className="detail-page">
       <Link to="/" className="back-link">
         ← Back to feed
       </Link>
-
       <article className="post-detail">
-        {/* ── Type accent bar ── */}
         <div className={`post-detail-accent post-detail-accent--${post.type}`} />
-
-        {/* ── Header ── */}
         <header className="post-detail-header">
           <span className={`type-badge type-badge--${post.type} type-badge--lg`}>
             {post.type === "lost" ? "🔴 LOST" : "🟢 FOUND"}
@@ -206,9 +179,7 @@ export default function PostDetailPage() {
             Posted {timeAgo(post.createdAt)}
           </span>
         </header>
-
         <h1 className="post-title post-title--detail">{post.title}</h1>
-
         {post.image && (
           <img
             src={post.image}
@@ -216,12 +187,9 @@ export default function PostDetailPage() {
             className="post-image post-image--detail"
           />
         )}
-
         <p className="post-description post-description--detail">
           {post.description}
         </p>
-
-        {/* ── Status Banner ── */}
         {isClaimed && (
           <div className="claimed-banner">
             <span className="claimed-banner-icon">
@@ -247,8 +215,6 @@ export default function PostDetailPage() {
             </div>
           </div>
         )}
-
-        {/* ── Detail grid ── */}
         <div className="detail-grid">
           {post.category && (
             <div className="detail-item">
@@ -285,8 +251,6 @@ export default function PostDetailPage() {
             </span>
           </div>
         </div>
-
-        {/* ── Like button ── */}
         <div className="detail-like-row">
           <button
             type="button"
@@ -298,11 +262,8 @@ export default function PostDetailPage() {
             <span>{likes} {likes === 1 ? "like" : "likes"}</span>
           </button>
         </div>
-
-        {/* ── Unified Central Action Area ── */}
         <div className="contact-box">
           {isResolved ? (
-            /* ── CASE 1: RESOLVED ── */
             <div className="action-card-resolved" style={{ textAlign: "center", padding: "0.75rem 0" }}>
               <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>✓</div>
               <h3 style={{ fontSize: "1.25rem", fontWeight: "700", marginBottom: "0.5rem", color: "var(--text-primary, #0f172a)" }}>
@@ -325,7 +286,6 @@ export default function PostDetailPage() {
               )}
             </div>
           ) : isOwner ? (
-            /* ── CASE 2: POST OWNER (OPEN or CLAIMED) ── */
             <>
               <div className="contact-box-header">
                 <div>
@@ -382,7 +342,6 @@ export default function PostDetailPage() {
               {copyMessage && <p className="copy-feedback">{copyMessage}</p>}
             </>
           ) : actionCardStep === "confirm" ? (
-            /* ── CASE 3a: OTHER USER - CONFIRM STEP ── */
             <div className="action-card-confirm" style={{ textAlign: "center", padding: "0.5rem 0" }}>
               <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>
                 {post.type === "lost" ? "🔍" : "📦"}
@@ -420,7 +379,6 @@ export default function PostDetailPage() {
               </div>
             </div>
           ) : actionCardStep === "submitted" ? (
-            /* ── CASE 3b: OTHER USER - SUBMITTED STEP ── */
             <div className="action-card-submitted" style={{ textAlign: "center", padding: "0.75rem 0" }}>
               <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>✓</div>
               <h3 style={{ fontSize: "1.25rem", fontWeight: "700", marginBottom: "0.5rem", color: "var(--text-primary, #0f172a)" }}>
@@ -442,7 +400,6 @@ export default function PostDetailPage() {
               </div>
             </div>
           ) : (
-            /* ── CASE 3c: OTHER USER - NORMAL STEP ── */
             <>
               <div className="contact-box-header">
                 <div>
@@ -532,8 +489,6 @@ export default function PostDetailPage() {
             </>
           )}
         </div>
-
-        {/* ── Comments section ── */}
         <section className="detail-comments">
           <h2 className="detail-comments-title">
             💬 Comments
@@ -545,14 +500,12 @@ export default function PostDetailPage() {
           />
         </section>
       </article>
-
       {showAuthModal && (
         <AuthModal
           onClose={() => setShowAuthModal(false)}
           message="Please sign in with Google to perform this action."
         />
       )}
-
       {showChat && post && (
         <ChatModal
           partnerId={post.authorId}

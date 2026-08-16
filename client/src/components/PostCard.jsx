@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { toggleLike } from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import CommentSection from "./CommentSection.jsx";
 import AuthModal from "./AuthModal.jsx";
-
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -16,17 +15,14 @@ function timeAgo(dateStr) {
   if (days < 7) return `${days}d ago`;
   return new Date(dateStr).toLocaleDateString();
 }
-
 export default function PostCard({ post }) {
   const { user } = useAuth();
-
   const [likes, setLikes] = useState(post.likes || 0);
   const [liked, setLiked] = useState(post.liked || false);
   const [likeBusy, setLikeBusy] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [commentCount, setCommentCount] = useState(post.commentCount || 0);
-
   async function handleLike(e) {
     e.preventDefault();
     if (!user.isAuthenticated) {
@@ -35,7 +31,6 @@ export default function PostCard({ post }) {
     }
     if (likeBusy) return;
     setLikeBusy(true);
-
     const wasLiked = liked;
     setLiked(!wasLiked);
     setLikes((prev) => (wasLiked ? prev - 1 : prev + 1));
@@ -50,20 +45,14 @@ export default function PostCard({ post }) {
       setLikeBusy(false);
     }
   }
-
   function handleToggleComments(e) {
     e.preventDefault();
     setShowComments((prev) => !prev);
   }
-
   const authorDisplayName = post.authorName || post.contactName || "Campus User";
-
   return (
     <article className={`post-card post-card--${post.type}`}>
-      {/* ── Card top border accent ── */}
       <div className={`post-card-accent post-card-accent--${post.type}`} />
-
-      {/* ── Header ── */}
       <header className="post-card-header">
         {post.authorId ? (
           <Link
@@ -133,8 +122,6 @@ export default function PostCard({ post }) {
           </span>
         </div>
       </header>
-
-      {/* ── Body ── */}
       <Link to={`/post/${post.id}`} className="post-card-body-link">
         <div className="post-card-body">
           <h3 className="post-title">{post.title}</h3>
@@ -144,8 +131,6 @@ export default function PostCard({ post }) {
           <p className="post-description">{post.description}</p>
         </div>
       </Link>
-
-      {/* ── Meta chips ── */}
       <div className="post-card-chips">
         {post.category && <span className="chip">{post.category}</span>}
         {post.location && (
@@ -169,8 +154,6 @@ export default function PostCard({ post }) {
           </span>
         ) : null}
       </div>
-
-      {/* ── Action bar ── */}
       <footer className="post-card-footer">
         <button
           type="button"
@@ -181,7 +164,6 @@ export default function PostCard({ post }) {
           <span className="action-btn-icon">{liked ? "❤️" : "🤍"}</span>
           <span>{likes}</span>
         </button>
-
         <button
           type="button"
           className={`action-btn ${showComments ? "action-btn--active" : ""}`}
@@ -194,13 +176,10 @@ export default function PostCard({ post }) {
             {commentCount} {commentCount === 1 ? "comment" : "comments"}
           </span>
         </button>
-
         <Link to={`/post/${post.id}`} className="action-btn action-btn--view">
           View details →
         </Link>
       </footer>
-
-      {/* ── Inline comments ── */}
       {showComments && (
         <div className="comment-section-wrapper">
           <CommentSection
@@ -209,7 +188,6 @@ export default function PostCard({ post }) {
           />
         </div>
       )}
-
       {showAuthModal && (
         <AuthModal
           onClose={() => setShowAuthModal(false)}
